@@ -1,2 +1,2 @@
 export { User } from './user'
-export { ResponseMessage } from './ws-message'
+export { WsResponseMessage, WsRequestMessage } from './ws-message'

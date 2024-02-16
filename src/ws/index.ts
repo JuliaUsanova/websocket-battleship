@@ -1,1 +1,1 @@
-export { openWSConnection } from './ws'
+export { WebSocketServerBattleShip } from './ws'

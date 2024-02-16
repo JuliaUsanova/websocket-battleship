@@ -1,21 +1,48 @@
-export class ResponseMessage {
-    _type: string
-    _data: string
-    id = 0
+import { ResponseTypeValues } from '../constants'
 
-    set type(value: string) {
-        this.type = value
-    }
+export class WsResponseMessage {
+    private _type: string
+    private _data: string
+    private _id = 0
 
-    set data(value: Record<string, string>) {
-        this._data = JSON.stringify(value)
+    constructor({
+        type,
+        data,
+    }: {
+        type: string
+        data: Record<string, string>
+    }) {
+        this._type = type
+        this._data = JSON.stringify(data)
     }
 
     get result() {
-        return JSON.stringify({
+        return {
             type: this._type,
             data: this._data,
-            id: this.id,
-        })
+            id: this._id,
+        }
+    }
+}
+export class WsRequestMessage {
+    private _type: (typeof ResponseTypeValues)[number]
+    private _data: Record<string, string>
+    constructor({
+        type,
+        data,
+    }: {
+        type: (typeof ResponseTypeValues)[number]
+        data: Record<string, string>
+    }) {
+        this._type = type
+        this._data = data
+    }
+
+    get type() {
+        return this._type
+    }
+
+    get data() {
+        return this._data
     }
 }
