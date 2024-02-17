@@ -7,9 +7,11 @@ class Handlers {
     static createUser(data: RequestData): WsResponseMessage {
         // TODO: MOVE TO VALIDATION
         if (!isUser(data)) {
-            throw new Error('Invalid request data, name and password are required')
+            throw new Error(
+                'Invalid request data, name and password are required'
+            )
         }
-        
+
         const user = Database.addUser(data)
 
         return new WsResponseMessage({
@@ -61,7 +63,7 @@ class Handlers {
     static updateRooms(): WsResponseMessage {
         return new WsResponseMessage({
             type: ResponseType.UPDATE_ROOMS,
-            data: {},
+            data: Database.getRooms(),
         })
     }
 

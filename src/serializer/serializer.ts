@@ -15,11 +15,12 @@ export class Serializer {
     ): WsRequestMessage {
         const { type, data } = JSON.parse(request.toString())
 
+        // TODO: THIS ERROR CRASHES THE SERVER
         if (!isWsResponseMessage({ type, data })) {
             throw new Error('Invalid request type')
         }
 
-        const parseData = JSON.parse(data)
+        const parseData = data.length ? JSON.parse(data) : {}
 
         return new WsRequestMessage({ type, data: parseData })
     }

@@ -1,4 +1,5 @@
-import { Room, User } from '../models'
+import { User } from '../models'
+import { Room } from '../models/room'
 
 const users: User[] = []
 const winners: string[] = []
@@ -20,8 +21,12 @@ export class Database {
         return user
     }
 
-    static getUser(name: string) {
-        return users.find((user) => user.name === name)
+    static getUser(index: number): User | undefined {
+        return users.find((user) => user.index === index)
+    }
+
+    static getAllUsers() {
+        return users
     }
 
     static addWinner(name: string) {

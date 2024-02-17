@@ -12,7 +12,6 @@ export const isWsResponseMessage = (
     return (
         response &&
         response.type &&
-        response.data &&
         ResponseTypeValues.includes(response.type) &&
         typeof response.data === 'string'
     )

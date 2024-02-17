@@ -3,7 +3,7 @@ export enum UserResponseType {
 }
 
 export enum GameResponseType {
-    CREATE_GAME = 'create_game',
+    CREATE_GAME = 'create_room',
     START_GAME = 'start_game',
     PLAYER_TURN = 'turn',
     ATTACK = 'attack',
