@@ -1,6 +1,6 @@
 export { User } from './user'
 export { WsResponseMessage, WsRequestMessage } from './ws-message'
 export { Room } from './room'
-// export { Game } from './game'
-// export { Attack } from './attack'
+export { Game } from './game'
+export { Ship } from './ship'
 export { Score } from './score'
