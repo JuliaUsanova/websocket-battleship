@@ -1,14 +1,14 @@
 import { ResponseType } from '../constants'
-import { RequestType } from '../constants/constants';
+import { RequestType } from '../constants/constants'
 import { Database } from '../db'
-import { Room, User } from '../models'
+import { Room, Score, User } from '../models'
 import { isUser } from '../type-guards'
 
-class Handlers {
+export class Handlers {
     static createUser(
-        data: RequestData,
-        id: number
-    ): { messageData: ResponseData; messageType: ResponseTypeValue } {
+        id: number,
+        data: RequestData
+    ): ResponseMessage<ResponseData> {
         // TODO: MOVE TO VALIDATION
         if (!isUser(data)) {
             throw new Error(
@@ -18,25 +18,18 @@ class Handlers {
 
         const user = Database.addUser(new User({ ...data, id }))
 
-        const room = new Room()
-        room.addUser(user)
-        Database.addRoom(room)
-
         return {
-            messageData: {
+            data: {
                 index: user.index,
                 name: user.name,
                 error: user.error,
                 errorText: user.errorText,
             },
-            messageType: ResponseType.REGISTER,
+            type: ResponseType.REGISTER,
         }
     }
 
-    static createRoom(
-        _data: RequestData,
-        userId: number
-    ): { messageData: ResponseData; messageType: ResponseTypeValue } {
+    static createRoom(userId: number): ResponseMessage<ResponseData> {
         const room = new Room()
         const user = Database.getUser(userId)
 
@@ -48,7 +41,7 @@ class Handlers {
         Database.addRoom(room)
 
         return {
-            messageData: [
+            data: [
                 {
                     roomId: room.roomId,
                     roomUsers: room.roomUsers.map((user) => ({
@@ -57,51 +50,24 @@ class Handlers {
                     })),
                 },
             ],
-            messageType: ResponseType.UPDATE_ROOMS,
+            type: ResponseType.UPDATE_ROOMS,
         }
     }
 
-    // static startGame(): WsResponseMessage {
-    //     return new WsResponseMessage({
-    //         type: ResponseType.START_GAME,
-    //         data: {},
-    //     })
-    // }
+    // static addUserToGame(): ResponseMessage<ResponseData> {}
 
-    // static playerTurn(): WsResponseMessage {
-    //     return new WsResponseMessage({
-    //         type: ResponseType.PLAYER_TURN,
-    //         data: {},
-    //     })
-    // }
+    // static addShips(): ResponseMessage<ResponseData> {}
 
-    // static attack(): WsResponseMessage {
-    //     return new WsResponseMessage({
-    //         type: ResponseType.ATTACK,
-    //         data: {},
-    //     })
-    // }
+    // static attack(): ResponseMessage<ResponseData> { }
 
-    // static finishGame(): WsResponseMessage {
-    //     return new WsResponseMessage({
-    //         type: ResponseType.FINISH_GAME,
-    //         data: {},
-    //     })
-    // }
+    // static randomAttack(): ResponseMessage<ResponseData> {}
 
-    // static updateRooms(): WsResponseMessage {
-    //     return new WsResponseMessage({
-    //         type: ResponseType.UPDATE_ROOMS,
-    //         data: Database.getRooms(),
-    //     })
-    // }
-
-    // static updateScore(): WsResponseMessage {
-    //     return new WsResponseMessage({
-    //         type: ResponseType.UPDATE_SCORE,
-    //         data: {},
-    //     })
-    // }
+    static updateScore(): ResponseMessage<ResponseData> {
+        return {
+            type: ResponseType.UPDATE_SCORE,
+            data: Score.total,
+        }
+    }
 }
 
 const getRequestHandler = (type: RequestTypeValue) => {
@@ -110,18 +76,14 @@ const getRequestHandler = (type: RequestTypeValue) => {
             return Handlers.createUser
         case RequestType.CREATE_ROOM:
             return Handlers.createRoom
-        // case RequestType.START_GAME:
+        // case RequestType.ADD_USER_TO_GAME:
         //     return Handlers.startGame
-        // case RequestType.PLAYER_TURN:
+        // case RequestType.ADD_SHIPS:
         //     return Handlers.playerTurn
         // case RequestType.ATTACK:
         //     return Handlers.attack
-        // case RequestType.FINISH_GAME:
+        // case RequestType.RANDOM_ATTACK:
         //     return Handlers.finishGame
-        // case RequestType.UPDATE_ROOMS:
-        //     return Handlers.updateRooms
-        // case RequestType.UPDATE_SCORE:
-        //     return Handlers.updateScore
         default:
             throw new Error('Invalid request type')
     }
@@ -133,6 +95,5 @@ export const handleRequestByType = (
     id: number
 ): ResponseMessage<ResponseData> => {
     const handler = getRequestHandler(type)
-    const { messageData, messageType } = handler(data, id)
-    return { data: messageData, type: messageType }
+    return handler(id, data)
 }

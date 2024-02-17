@@ -1,38 +1,32 @@
-import { ResponseType } from '../constants'
-import { Score, WsRequestMessage, WsResponseMessage } from '../models'
-import { Database } from '../db'
-import { handleRequestByType } from './request-handler'
-import { RequestType } from '../constants/constants';
+import { WsRequestMessage, WsResponseMessage } from '../models'
+import { Handlers, handleRequestByType } from './request-handler'
+import { RequestType } from '../constants/constants'
 
 export class GameController {
     static handleRequest(
-        request: WsRequestMessage, id: number
+        request: WsRequestMessage,
+        id: number
     ): { message: WsResponseMessage; shouldUpdateAllClients: boolean }[] {
-        const responseMessages = []
-        const responseMessage = handleRequestByType(request.type, request.data, id)
+        const responseMessage = handleRequestByType(
+            request.type,
+            request.data,
+            id
+        )
 
-        responseMessages.push({
-            message: new WsResponseMessage(responseMessage),
-            shouldUpdateAllClients: false,
-        })
+        const responseMessages = [
+            {
+                message: new WsResponseMessage(responseMessage),
+                shouldUpdateAllClients: false,
+            },
+        ]
 
         if (request.type === RequestType.REGISTER) {
-            const updateRoomsMsg = new WsResponseMessage({
-                type: ResponseType.UPDATE_ROOMS,
-                data: Database.getRooms(),
-            })
-
-            const updateScoreMsg = new WsResponseMessage({
-                type: ResponseType.UPDATE_SCORE,
-                data: Score.total,
-            })
-
             responseMessages.push({
-                message: updateRoomsMsg,
+                message: new WsResponseMessage(Handlers.createRoom(id)),
                 shouldUpdateAllClients: true,
             })
             responseMessages.push({
-                message: updateScoreMsg,
+                message: new WsResponseMessage(Handlers.updateScore()),
                 shouldUpdateAllClients: true,
             })
         }
