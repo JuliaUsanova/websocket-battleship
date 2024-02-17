@@ -1,25 +1,24 @@
 import { ResponseType, ResponseTypeValues } from '../constants'
-import { User, WsResponseMessage } from '../models'
+import { Database } from '../db'
+import { WsResponseMessage } from '../models'
 import { isUser } from '../type-guards'
 
-// TODO: MOVE TO DB
-const users = []
-const winners = []
-const rooms = []
-
 class Handlers {
-    static createUser(data: Record<string, string>): WsResponseMessage {
+    static createUser(data: RequestData): WsResponseMessage {
+        // TODO: MOVE TO VALIDATION
         if (!isUser(data)) {
-            throw new Error('Invalid request data')
+            throw new Error('Invalid request data, name and password are required')
         }
-        const user = new User(data)
-        users.push(user)
+        
+        const user = Database.addUser(data)
 
         return new WsResponseMessage({
             type: ResponseType.REGISTER,
             data: {
-                id: user.id,
+                index: user.index,
                 name: user.name,
+                error: user.error,
+                errorText: user.errorText,
             },
         })
     }
@@ -101,7 +100,7 @@ export const getRequestHandler = (
 
 export const handleRequest = (
     type: (typeof ResponseTypeValues)[number],
-    data: Record<string, string>
+    data: RequestData
 ) => {
     const handler = getRequestHandler(type)
     return handler(data)

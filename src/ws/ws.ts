@@ -18,10 +18,10 @@ export class WebSocketServerBattleShip {
         })
     }
 
-    public closeAllConnections() {
+    public closeAllConnections(code?: number, reason?: string) {
         this.wsServer.clients.forEach((client) => {
             if (client.readyState === 1) {
-                this.closeWSConnection(client)
+                this.closeWSConnection(client, code, reason)
             }
         })
 
@@ -65,7 +65,7 @@ export class WebSocketServerBattleShip {
             try {
                 const request = Serializer.deserialize(data)
                 const result = handleRequest(request.type, request.data)
-                ws.send(Serializer.serialize(result));
+                ws.send(Serializer.serialize(result))
 
                 // ws.send(
                 //     JSON.stringify({
@@ -79,13 +79,12 @@ export class WebSocketServerBattleShip {
                 // )
             } catch (error) {
                 console.error('Error on message', error)
-                this.closeAllConnections()
+                this.closeAllConnections(500, JSON.stringify(error))
             }
         })
 
         ws.on('close', (code, reason) => {
             this.closeWSConnection(ws, code, reason)
-            this.closeAllConnections()
         })
     }
 }
