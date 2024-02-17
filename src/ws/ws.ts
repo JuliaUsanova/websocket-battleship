@@ -9,12 +9,14 @@ export class WebSocketServerBattleShip {
         this.wsServer = new WebSocketServer({ port })
 
         this.wsServer.on('connection', (ws, request) => {
+            const id = Date.now();
+
             console.log(
-                `Websocket is created on port ${port}! WS address: ${request.headers.host}`
+                `Websocket is created on port ${port}! WS address: ${request.headers.host}, ws id: ${id}`
             )
 
-            this.addListeners(ws)
-            this.addErrorListeners(ws)
+            this.addListeners(ws, id)
+            this.addErrorListeners(ws, id)
         })
     }
 
@@ -40,31 +42,31 @@ export class WebSocketServerBattleShip {
         wsClient.terminate()
     }
 
-    private addErrorListeners(ws: WebSocket) {
+    private addErrorListeners(ws: WebSocket, id: number) {
         ws.on('wsClientError', (error) => {
-            console.error('wsClientError', error)
+            console.error(`wsClientError for ws ${id}`, error)
             this.closeAllConnections()
         })
 
         ws.on('unexpected-response', (response) => {
-            console.error('unexpected-response ', response)
+            console.error(`unexpected-response for ws ${id} `, response)
             this.closeAllConnections()
         })
 
         ws.on('error', (error) => {
-            console.log('websocket error ', error)
+            console.log(`websocket ${id} error `, error)
             this.closeAllConnections()
         })
     }
 
-    private addListeners(ws: WebSocket) {
+    private addListeners(ws: WebSocket, id: number) {
         ws.on('message', (data) => {
             // TODO: LOG EVERY RECEIVED MESSAGE
             console.log(`message: ${data}`)
 
             try {
                 const request = Serializer.deserialize(data)
-                const responseMessages = GameController.handleRequest(request)
+                const responseMessages = GameController.handleRequest(request, id)
 
                 responseMessages.forEach(
                     ({ message, shouldUpdateAllClients }) => {

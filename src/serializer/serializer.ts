@@ -1,5 +1,5 @@
 import { WsRequestMessage, WsResponseMessage } from '../models'
-import { isWsResponseMessage } from '../type-guards'
+import { isValidRequest } from '../type-guards'
 
 export class Serializer {
     static serialize(response: WsResponseMessage): string {
@@ -16,7 +16,7 @@ export class Serializer {
         const { type, data } = JSON.parse(request.toString())
 
         // TODO: THIS ERROR CRASHES THE SERVER
-        if (!isWsResponseMessage({ type, data })) {
+        if (!isValidRequest({ type, data })) {
             throw new Error('Invalid request type')
         }
 

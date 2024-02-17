@@ -1,9 +1,6 @@
-import { ResponseTypeValues } from '../constants'
-
-
 // TODO: ADD GENERIC TYPES
 export class WsResponseMessage {
-    private _type: (typeof ResponseTypeValues)[number]
+    private _type: ResponseTypeValue
     private _data: string
     private _id = 0
 
@@ -11,7 +8,7 @@ export class WsResponseMessage {
         type,
         data,
     }: {
-        type: (typeof ResponseTypeValues)[number]
+        type: ResponseTypeValue
         data: ResponseData
     }) {
         this._type = type
@@ -27,13 +24,13 @@ export class WsResponseMessage {
     }
 }
 export class WsRequestMessage {
-    private _type: (typeof ResponseTypeValues)[number]
+    private _type: RequestTypeValue
     private _data: RequestData
     constructor({
         type,
         data,
     }: {
-        type: (typeof ResponseTypeValues)[number]
+        type: RequestTypeValue
         data: RequestData
     }) {
         this._type = type

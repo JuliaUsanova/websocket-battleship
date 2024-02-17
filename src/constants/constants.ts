@@ -3,7 +3,7 @@ export enum UserResponseType {
 }
 
 export enum GameResponseType {
-    CREATE_GAME = 'create_room',
+    CREATE_GAME = 'create_game',
     START_GAME = 'start_game',
     PLAYER_TURN = 'turn',
     ATTACK = 'attack',
@@ -23,3 +23,25 @@ export const ResponseType = {
 
 export const ResponseTypeValues = Object.values(ResponseType)
 
+export enum UserRequestType {
+    REGISTER = 'reg',
+}
+
+export enum RoomRequestType {
+    CREATE_ROOM = 'create_room',
+    ADD_USER_TO_GAME = 'add_user_to_room',
+}
+
+export enum GameRequestType {
+    ADD_SHIPS = 'add_ships',
+    ATTACK = 'attack',
+    RANDOM_ATTACK = 'random_attack',
+}
+
+export const RequestType = {
+    ...UserRequestType,
+    ...RoomRequestType,
+    ...GameRequestType,
+}
+
+export const RequestTypeValues = Object.values(RequestType)

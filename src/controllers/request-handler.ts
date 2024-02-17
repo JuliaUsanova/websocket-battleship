@@ -1,9 +1,14 @@
-import { ResponseType, ResponseTypeValues } from '../constants'
+import { ResponseType } from '../constants'
+import { RequestType } from '../constants/constants';
 import { Database } from '../db'
+import { Room, User } from '../models'
 import { isUser } from '../type-guards'
 
 class Handlers {
-    static createUser(data: RequestData): ResponseData {
+    static createUser(
+        data: RequestData,
+        id: number
+    ): { messageData: ResponseData; messageType: ResponseTypeValue } {
         // TODO: MOVE TO VALIDATION
         if (!isUser(data)) {
             throw new Error(
@@ -11,22 +16,50 @@ class Handlers {
             )
         }
 
-        const user = Database.addUser(data)
+        const user = Database.addUser(new User({ ...data, id }))
+
+        const room = new Room()
+        room.addUser(user)
+        Database.addRoom(room)
 
         return {
-            index: user.index,
-            name: user.name,
-            error: user.error,
-            errorText: user.errorText,
+            messageData: {
+                index: user.index,
+                name: user.name,
+                error: user.error,
+                errorText: user.errorText,
+            },
+            messageType: ResponseType.REGISTER,
         }
     }
 
-    // static createGame(): WsResponseMessage {
-    //     return new WsResponseMessage({
-    //         type: ResponseType.CREATE_GAME,
-    //         data: {},
-    //     })
-    // }
+    static createRoom(
+        _data: RequestData,
+        userId: number
+    ): { messageData: ResponseData; messageType: ResponseTypeValue } {
+        const room = new Room()
+        const user = Database.getUser(userId)
+
+        if (!user) {
+            throw new Error('Create user before creating a game room')
+        }
+
+        room.addUser(user)
+        Database.addRoom(room)
+
+        return {
+            messageData: [
+                {
+                    roomId: room.roomId,
+                    roomUsers: room.roomUsers.map((user) => ({
+                        index: user.index,
+                        name: user.name,
+                    })),
+                },
+            ],
+            messageType: ResponseType.UPDATE_ROOMS,
+        }
+    }
 
     // static startGame(): WsResponseMessage {
     //     return new WsResponseMessage({
@@ -71,25 +104,23 @@ class Handlers {
     // }
 }
 
-const getRequestHandler = (type: (typeof ResponseTypeValues)[number]) => {
+const getRequestHandler = (type: RequestTypeValue) => {
     switch (type) {
-        case ResponseType.REGISTER:
+        case RequestType.REGISTER:
             return Handlers.createUser
-        // case ResponseType.CREATE_GAME:
-        //     // create room
-        //     // add existing user to the room
-        //     return Handlers.createGame
-        // case ResponseType.START_GAME:
+        case RequestType.CREATE_ROOM:
+            return Handlers.createRoom
+        // case RequestType.START_GAME:
         //     return Handlers.startGame
-        // case ResponseType.PLAYER_TURN:
+        // case RequestType.PLAYER_TURN:
         //     return Handlers.playerTurn
-        // case ResponseType.ATTACK:
+        // case RequestType.ATTACK:
         //     return Handlers.attack
-        // case ResponseType.FINISH_GAME:
+        // case RequestType.FINISH_GAME:
         //     return Handlers.finishGame
-        // case ResponseType.UPDATE_ROOMS:
+        // case RequestType.UPDATE_ROOMS:
         //     return Handlers.updateRooms
-        // case ResponseType.UPDATE_SCORE:
+        // case RequestType.UPDATE_SCORE:
         //     return Handlers.updateScore
         default:
             throw new Error('Invalid request type')
@@ -97,9 +128,11 @@ const getRequestHandler = (type: (typeof ResponseTypeValues)[number]) => {
 }
 
 export const handleRequestByType = (
-    type: (typeof ResponseTypeValues)[number],
-    data: RequestData
+    type: RequestTypeValue,
+    data: RequestData,
+    id: number
 ): ResponseMessage<ResponseData> => {
     const handler = getRequestHandler(type)
-    return { data: handler(data), type }
+    const { messageData, messageType } = handler(data, id)
+    return { data: messageData, type: messageType }
 }

@@ -7,21 +7,20 @@ const rooms: Room[] = []
 export class Database {
     // TODO: SHOULD DB STORE ERRORS?
     static addUser(data: User): User {
-        const user = new User(data)
         if (
             users.find(
                 (user) =>
                     user.name === data.name && user.password === data.password
             )
         ) {
-            user.setError('User already exists')
+            data.setError('User already exists')
         }
-        users.push(user)
-        return user
+        users.push(data)
+        return data
     }
 
-    static getUser(name: string) {
-        return users.find((user) => user.name === name)
+    static getUser(index: number): User | undefined {
+        return users.find((user) => user.index === index)
     }
 
     static addWinner(name: string) {
@@ -37,6 +36,12 @@ export class Database {
     }
 
     static getRooms() {
-        return rooms
+        return rooms.map((room) => ({
+            roomId: room.roomId,
+            roomUsers: room.roomUsers.map((user) => ({
+                index: user.index,
+                name: user.name,
+            })),
+        }))
     }
 }

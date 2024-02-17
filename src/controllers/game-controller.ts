@@ -1,21 +1,22 @@
 import { ResponseType } from '../constants'
 import { Score, WsRequestMessage, WsResponseMessage } from '../models'
-import { Database } from '../validators'
+import { Database } from '../db'
 import { handleRequestByType } from './request-handler'
+import { RequestType } from '../constants/constants';
 
 export class GameController {
     static handleRequest(
-        request: WsRequestMessage
+        request: WsRequestMessage, id: number
     ): { message: WsResponseMessage; shouldUpdateAllClients: boolean }[] {
         const responseMessages = []
-        const responseMessage = handleRequestByType(request.type, request.data)
+        const responseMessage = handleRequestByType(request.type, request.data, id)
 
         responseMessages.push({
             message: new WsResponseMessage(responseMessage),
             shouldUpdateAllClients: false,
         })
 
-        if (request.type === ResponseType.REGISTER) {
+        if (request.type === RequestType.REGISTER) {
             const updateRoomsMsg = new WsResponseMessage({
                 type: ResponseType.UPDATE_ROOMS,
                 data: Database.getRooms(),

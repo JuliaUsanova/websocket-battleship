@@ -19,6 +19,7 @@ httpServer
         game.start(WS_PORT)
     })
     .on('clientError', (err) => {
+        debugger
         console.error('HTTP Server clientError', err)
         exitHandler(500, JSON.stringify(err))
     })

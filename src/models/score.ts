@@ -1,4 +1,4 @@
-import { Database } from '../validators'
+import { Database } from '../db'
 
 
 const _score = new Map<number, number>()

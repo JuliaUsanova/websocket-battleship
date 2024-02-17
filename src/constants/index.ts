@@ -1,1 +1,8 @@
-export { ResponseType, GeneralResponseType, GameResponseType, UserResponseType, ResponseTypeValues } from './constants'
+export {
+    ResponseType,
+    GeneralResponseType,
+    GameResponseType,
+    UserResponseType,
+    ResponseTypeValues,
+    RequestTypeValues,
+} from './constants'

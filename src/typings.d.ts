@@ -9,9 +9,12 @@ declare type UserRequestData = {
 }
 
 declare type RequestMessage<T extends RequestData> = {
-    type: (typeof ResponseTypeValues)[number]
+    type: ResponseTypeValue
     data: T
 }
+
+declare type RequestTypeValue =
+    (typeof import('./constants').RequestTypeValues)[number]
 
 // RESPONSE
 declare type ResponseData =
@@ -20,7 +23,7 @@ declare type ResponseData =
     | ScoreResponseData[]
 
 declare type ResponseMessage<T extends ResponseData> = {
-    type: (typeof ResponseTypeValues)[number]
+    type: ResponseTypeValue
     data: T
 }
 
@@ -33,10 +36,13 @@ declare type UserResponseData = {
 
 declare type RoomResponseData = {
     roomId: number
-    roomUsers: UserResponseData[]
+    roomUsers: Pick<User, 'index', 'name'>[]
 }
 
 declare type ScoreResponseData = {
     name: string
     wins: number
 }
+
+declare type ResponseTypeValue =
+    (typeof import('./constants').ResponseTypeValues)[number]
