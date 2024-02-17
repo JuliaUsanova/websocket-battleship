@@ -1,9 +1,6 @@
 import { WebSocket, WebSocketServer } from 'ws'
 import { Serializer } from '../serializer'
-import { handleRequest } from '../controllers'
-import { ResponseType } from '../constants'
-import { Score, WsResponseMessage } from '../models'
-import { Database } from '../db'
+import { GameController } from '../controllers'
 
 export class WebSocketServerBattleShip {
     private wsServer: WebSocketServer
@@ -67,32 +64,21 @@ export class WebSocketServerBattleShip {
 
             try {
                 const request = Serializer.deserialize(data)
-                const result = handleRequest(request.type, request.data)
-                ws.send(Serializer.serialize(result))
+                const responseMessages = GameController.handleRequest(request)
 
-                this.wsServer.clients.forEach((client) => {
-                    console.log('client.readyState', client.readyState)
-                    debugger
-                })
-                if (request.type === 'reg') {
-                    ws.send(
-                        Serializer.serialize(
-                            new WsResponseMessage({
-                                type: ResponseType.UPDATE_ROOMS,
-                                data: Database.getRooms(),
-                            })
-                        )
-                    )
+                responseMessages.forEach(
+                    ({ message, shouldUpdateAllClients }) => {
+                        ws.send(Serializer.serialize(message))
 
-                    ws.send(
-                        Serializer.serialize(
-                            new WsResponseMessage({
-                                type: ResponseType.UPDATE_SCORE,
-                                data: Score.total,
+                        if (shouldUpdateAllClients) {
+                            this.wsServer.clients.forEach((client) => {
+                                if (client !== ws && client.readyState === 1) {
+                                    client.send(Serializer.serialize(message))
+                                }
                             })
-                        )
-                    )
-                }
+                        }
+                    }
+                )
             } catch (error) {
                 console.error('Error on message', error)
                 this.closeAllConnections(500, JSON.stringify(error))

@@ -3,7 +3,7 @@ import { ResponseTypeValues } from '../constants'
 
 // TODO: ADD GENERIC TYPES
 export class WsResponseMessage {
-    private _type: string
+    private _type: (typeof ResponseTypeValues)[number]
     private _data: string
     private _id = 0
 
@@ -11,8 +11,8 @@ export class WsResponseMessage {
         type,
         data,
     }: {
-        type: string
-        data: RequestData
+        type: (typeof ResponseTypeValues)[number]
+        data: ResponseData
     }) {
         this._type = type
         this._data = JSON.stringify(data)
