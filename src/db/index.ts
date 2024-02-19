@@ -51,13 +51,12 @@ export class Database {
     }
 
     static getRooms() {
-        return rooms.map((room) => ({
-            roomId: room.roomId,
-            roomUsers: room.roomUsers.map((user) => ({
-                index: user.index,
-                name: user.name,
-            })),
-        }))
+        return rooms
+            .filter((r) => r.users.length < 2)
+            .map((room) => ({
+                roomId: room.roomId,
+                roomUsers: room.users,
+            }))
     }
 
     static saveGame(game: Game) {
@@ -70,8 +69,13 @@ export class Database {
         return game
     }
 
-    static getGameByUserId(index: number): Game | undefined {
-        return games.find((game) => game.playerIndex === index)
+    static getRoomByUserId(index: number): Room | undefined {
+        return rooms.find((room) =>
+            room.users.find((user) => user.index === index)
+        )
     }
 
+    static getGameByUserId(index: number): Game | undefined {
+        return games.find((game) => game.hasPlayer(index))
+    }
 }

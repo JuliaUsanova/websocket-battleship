@@ -1,9 +1,16 @@
 import { User } from './user'
 
 export class Room {
+    private roomUsers: User[] = []
+    private games: number[] = []
     roomId: number = Date.now()
-    roomUsers: User[] = []
-    games: number[] = []
+
+    get users() {
+        return this.roomUsers.map((user) => ({
+            index: user.index,
+            name: user.name,
+        }))
+    }
 
     addUser(user: User) {
         this.roomUsers.push(user)
@@ -13,7 +20,7 @@ export class Room {
         this.games.push(gameId)
     }
 
-    getUsers() {
-        return this.roomUsers
+    hasUser(userId: number) {
+        return this.roomUsers.find((user) => user.index === userId)
     }
 }

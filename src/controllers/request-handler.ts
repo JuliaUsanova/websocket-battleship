@@ -30,13 +30,17 @@ export class Handlers {
     }
 
     static createRoom(userId: number): ResponseMessage<ResponseData> {
-        const room = new Room()
         const user = Database.getUser(userId)
 
         if (!user) {
             throw new Error('Create user before creating a game room')
         }
 
+        if (Database.getRoomByUserId(userId)) {
+            throw new Error('User already in a room')
+        }
+
+        const room = new Room()
         room.addUser(user)
         Database.addRoom(room)
 
@@ -44,10 +48,7 @@ export class Handlers {
             data: [
                 {
                     roomId: room.roomId,
-                    roomUsers: room.roomUsers.map((user) => ({
-                        index: user.index,
-                        name: user.name,
-                    })),
+                    roomUsers: room.users,
                 },
             ],
             type: ResponseType.UPDATE_ROOMS,
@@ -74,42 +75,39 @@ export class Handlers {
             throw new Error('Room not found')
         }
 
-        room.addUser(user)
-
-        if (room.roomUsers.length === 2) {
-            room.roomUsers.forEach((u) => {
-                const game = new Game(room.roomId, u.index)
-                u.addGame(game.id)
-                room.addGameId(game.id)
-                Database.saveRoom(room)
-                Database.saveGame(game)
-                Database.saveUser(u)
-            })
-
-            const userGame = Database.getGameByUserId(user.index)!
-
-            return {
-                data: {
-                    gameId: userGame.id,
-                    playerId: user.index,
-                },
-                type: ResponseType.CREATE_GAME,
-            }
-        } else {
+        if (!room.hasUser(userId)) {
+            room.addUser(user)
             Database.saveRoom(room)
+        }
 
-            return {
-                data: [
-                    {
-                        roomId: room.roomId,
-                        roomUsers: room.roomUsers.map((user) => ({
-                            index: user.index,
-                            name: user.name,
-                        })),
-                    },
-                ],
-                type: ResponseType.UPDATE_ROOMS,
-            }
+        return {
+            data: [
+                {
+                    roomId: room.roomId,
+                    roomUsers: room.users,
+                },
+            ],
+            type: ResponseType.UPDATE_ROOMS,
+        }
+    }
+
+    static createGame(userId: number): ResponseMessage<ResponseData> {
+        const room = Database.getRoomByUserId(userId)
+
+        if (!room) {
+            throw new Error('Room not found')
+        }
+
+        const roomUsersIds = room.users.map((u) => u.index)
+        const game = new Game(room.roomId, roomUsersIds)
+        Database.saveGame(game)
+
+        return {
+            data: {
+                idGame: game.id,
+                idPlayer: userId,
+            },
+            type: ResponseType.CREATE_GAME,
         }
     }
 
@@ -134,12 +132,28 @@ export class Handlers {
         }
 
         console.log('>>>>>>> INDEX PLAYER FROM UI <<<<<<<<< ', data.indexPlayer)
-        game.addShips(data.ships)
+        game.addShips(id, data.ships)
 
         return {
             data: {
-                ships: game.ships,
-                currentPlayerIndex: game.playerIndex,
+                ships: game.getShips(id),
+                currentPlayerIndex: id,
+            },
+            type: ResponseType.START_GAME,
+        }
+    }
+
+    static startGame(userId: number): ResponseMessage<ResponseData> {
+        const game = Database.getGameByUserId(userId)
+
+        if (!game) {
+            throw new Error('Game not found')
+        }
+
+        return {
+            data: {
+                ships: game.getShips(userId),
+                currentPlayerIndex: userId,
             },
             type: ResponseType.START_GAME,
         }

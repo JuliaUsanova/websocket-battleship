@@ -59,8 +59,8 @@ declare type ScoreResponseData = {
 }
 
 declare type CreateGameResponseData = {
-    gameId: number
-    playerId: number
+    idGame: number
+    idPlayer: number
 }
 
 declare type StartGameResponseData = {
