@@ -144,7 +144,7 @@ export class Handler {
         return { currentPlayer: nextTurnId }
     }
 
-    static finishGame(gameId: number): void {
+    static finishGame(gameId: number): FinishGameResponseData {
         const game = GameController.getGame(gameId)
 
         if (!game) {
@@ -165,6 +165,8 @@ export class Handler {
 
         ScoreController.addWin(user.name)
         room.clear()
+
+        return { winPlayer: winnerId }
     }
 
     static updateScore(): ScoreResponseData[] {

@@ -20,7 +20,6 @@ export class SequentialRequestHandler {
     ) => (userId: number, data: RequestData) => ResponseMessagesQueue = (
         type
     ) => {
-
         switch (type) {
             case RequestType.REGISTER:
                 if (RoomController.getActiveRooms().length) {
@@ -199,12 +198,19 @@ export class SequentialRequestHandler {
         const attackResult = Handler.attack(currentPlayerId, data)
         const secondPlayerId = game.getNextPlayerIndex(currentPlayerId)
 
-        queue.add({ data: attackResult, type: ResponseType.ATTACK }, [
-            currentPlayerId,
-            secondPlayerId,
-        ])
+        if (game.killedShip) {
+            game.killedShip.shipCells.forEach((cell) => {
+                const attack = {
+                    status: AttackStatus.KILLED,
+                    position: cell,
+                    currentPlayer: currentPlayerId,
+                }
+                queue.add({ data: attack, type: ResponseType.ATTACK }, [
+                    currentPlayerId,
+                    secondPlayerId,
+                ])
+            })
 
-        if (game.lastAffectedCells.length > 1) {
             game.lastAffectedCells.forEach((cell) => {
                 const attack = {
                     status: AttackStatus.MISS,
@@ -216,12 +222,21 @@ export class SequentialRequestHandler {
                     secondPlayerId,
                 ])
             })
+        } else {
+            queue.add({ data: attackResult, type: ResponseType.ATTACK }, [
+                currentPlayerId,
+                secondPlayerId,
+            ])
         }
 
         if (game.status === GAME_STATUS.FINISHED) {
+            const winner = Handler.finishGame(game.id)
             const winners = Handler.updateScore()
-            Handler.finishGame(game.id)
 
+            queue.add({ data: winner, type: ResponseType.FINISH_GAME }, [
+                currentPlayerId,
+                secondPlayerId,
+            ])
             queue.add({ data: winners, type: ResponseType.UPDATE_SCORE }, [
                 currentPlayerId,
                 secondPlayerId,
@@ -259,12 +274,19 @@ export class SequentialRequestHandler {
         const attackResult = Handler.randomAttack(currentPlayerId, data)
         const secondPlayerId = game.getNextPlayerIndex(currentPlayerId)
 
-        queue.add({ data: attackResult, type: ResponseType.ATTACK }, [
-            currentPlayerId,
-            secondPlayerId,
-        ])
+        if (game.killedShip) {
+            game.killedShip.shipCells.forEach((cell) => {
+                const attack = {
+                    status: AttackStatus.KILLED,
+                    position: cell,
+                    currentPlayer: currentPlayerId,
+                }
+                queue.add({ data: attack, type: ResponseType.ATTACK }, [
+                    currentPlayerId,
+                    secondPlayerId,
+                ])
+            })
 
-        if (game.lastAffectedCells.length > 1) {
             game.lastAffectedCells.forEach((cell) => {
                 const attack = {
                     status: AttackStatus.MISS,
@@ -276,12 +298,21 @@ export class SequentialRequestHandler {
                     secondPlayerId,
                 ])
             })
+        } else {
+            queue.add({ data: attackResult, type: ResponseType.ATTACK }, [
+                currentPlayerId,
+                secondPlayerId,
+            ])
         }
 
         if (game.status === GAME_STATUS.FINISHED) {
+            const winner = Handler.finishGame(game.id)
             const winners = Handler.updateScore()
-            Handler.finishGame(game.id)
 
+            queue.add({ data: winner, type: ResponseType.FINISH_GAME }, [
+                currentPlayerId,
+                secondPlayerId,
+            ])
             queue.add({ data: winners, type: ResponseType.UPDATE_SCORE }, [
                 currentPlayerId,
                 secondPlayerId,

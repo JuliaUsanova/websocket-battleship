@@ -9,6 +9,8 @@ export class Game {
     roomId: number
     lastAttackStatus: AttackStatus
     lastAffectedCells: { x: number; y: number }[] = []
+    lastHit: { x: number; y: number } | null = null
+    killedShip: Ship | null = null
 
     constructor(roomId: number) {
         this.roomId = roomId
@@ -17,6 +19,11 @@ export class Game {
     }
 
     attack(playerIndex: number, { x, y }: { x: number; y: number }) {
+        if (this.lastHit?.x === x && this.lastHit?.y === y) {
+            this.lastAttackStatus = AttackStatus.MISS
+            return
+        }
+
         if (!this.hasPlayer(playerIndex)) {
             throw new Error('Player not found')
         }
@@ -31,6 +38,7 @@ export class Game {
 
         this.lastAttackStatus = AttackStatus.MISS
         this.lastAffectedCells = [{ x, y }]
+        this.killedShip = null
 
         const playerShips = this.getShips(enemyIndex)
         const attackedShip = playerShips.find((ship) => ship.isHit(x, y))
@@ -42,10 +50,10 @@ export class Game {
                 ? AttackStatus.KILLED
                 : AttackStatus.SHOT
 
-            this.lastAffectedCells =
-                this.lastAttackStatus === AttackStatus.KILLED
-                    ? attackedShip?.getNearbyCells()
-                    : [{ x, y }]
+            if (this.lastAttackStatus === AttackStatus.KILLED) {
+                this.lastAffectedCells = attackedShip?.getNearbyCells()
+                this.killedShip = attackedShip
+            }
         }
 
         this.updateStatus()

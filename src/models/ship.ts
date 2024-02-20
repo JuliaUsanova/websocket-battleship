@@ -26,6 +26,20 @@ export class Ship {
         this.hitCells = 0
     }
 
+    get shipCells() {
+        const result = []
+        if (this.direction) {
+            for (let i = 0; i < this.length; i++) {
+                result.push({ x: this.position.x, y: this.position.y + i })
+            }
+        } else {
+            for (let i = 0; i < this.length; i++) {
+                result.push({ x: this.position.x + i, y: this.position.y })
+            }
+        }
+        return result
+    }
+
     isHit(x: number, y: number) {
         if (this.direction) {
             return (

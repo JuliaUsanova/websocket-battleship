@@ -21,12 +21,12 @@ declare type AttackRequestData = {
     gameId: number
     x: number
     y: number
-    indexPlayer: number /* id of the player in the current game session */
+    indexPlayer: number
 }
 
 declare type RandomAttackRequestData = {
     gameId: number
-    indexPlayer: number /* id of the player in the current game session */
+    indexPlayer: number
 }
 
 declare type RequestMessage<T extends RequestData> = {
@@ -46,6 +46,7 @@ declare type ResponseData =
     | StartGameResponseData
     | AttackResponse
     | PlayerTurnResponse
+    | FinishGameResponseData
 
 declare type ResponseMessage<T extends ResponseData> = {
     type: ResponseTypeValue
@@ -84,12 +85,16 @@ declare type AttackResponse = {
         x: number
         y: number
     }
-    currentPlayer: number /* id of the player in the current game session */
+    currentPlayer: number
     status: 'miss' | 'killed' | 'shot'
 }
 
 declare type PlayerTurnResponse = {
     currentPlayer: number
+}
+
+declare type FinishGameResponseData = {
+    winPlayer: number
 }
 
 declare type ResponseTypeValue =
