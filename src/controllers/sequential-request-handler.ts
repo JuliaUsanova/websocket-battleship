@@ -185,24 +185,38 @@ export class SequentialRequestHandler {
         }
 
         const currentPlayerId = data.indexPlayer
+        const game = GameController.getGame(data.gameId)
 
         if (userId !== currentPlayerId) {
             throw new Error('Invalid user')
         }
 
-        const queue = this.buildResponseMessageQueue()
-        const attackResult = Handler.attack(currentPlayerId, data)
-        const game = GameController.getGame(data.gameId)
-
         if (!game) {
             throw new Error('Game not found')
         }
 
+        const queue = this.buildResponseMessageQueue()
+        const attackResult = Handler.attack(currentPlayerId, data)
         const secondPlayerId = game.getNextPlayerIndex(currentPlayerId)
+
         queue.add({ data: attackResult, type: ResponseType.ATTACK }, [
             currentPlayerId,
             secondPlayerId,
         ])
+
+        if (game.lastAffectedCells.length > 1) {
+            game.lastAffectedCells.forEach((cell) => {
+                const attack = {
+                    status: AttackStatus.MISS,
+                    position: cell,
+                    currentPlayer: currentPlayerId,
+                }
+                queue.add({ data: attack, type: ResponseType.ATTACK }, [
+                    currentPlayerId,
+                    secondPlayerId,
+                ])
+            })
+        }
 
         if (game.status === GAME_STATUS.FINISHED) {
             const winners = Handler.updateScore()
@@ -231,24 +245,39 @@ export class SequentialRequestHandler {
         }
 
         const currentPlayerId = data.indexPlayer
+        const game = GameController.getGame(data.gameId)
 
         if (userId !== currentPlayerId) {
             throw new Error('Invalid user')
         }
 
-        const queue = this.buildResponseMessageQueue()
-        const attackResult = Handler.randomAttack(currentPlayerId, data)
-        const game = GameController.getGame(data.gameId)
-
         if (!game) {
             throw new Error('Game not found')
         }
 
+        const queue = this.buildResponseMessageQueue()
+        const attackResult = Handler.randomAttack(currentPlayerId, data)
         const secondPlayerId = game.getNextPlayerIndex(currentPlayerId)
+
         queue.add({ data: attackResult, type: ResponseType.ATTACK }, [
             currentPlayerId,
             secondPlayerId,
         ])
+
+        if (game.lastAffectedCells.length > 1) {
+            game.lastAffectedCells.forEach((cell) => {
+                const attack = {
+                    status: AttackStatus.MISS,
+                    position: cell,
+                    currentPlayer: currentPlayerId,
+                }
+                queue.add({ data: attack, type: ResponseType.ATTACK }, [
+                    currentPlayerId,
+                    secondPlayerId,
+                ])
+            })
+        }
+
         if (game.status === GAME_STATUS.FINISHED) {
             const winners = Handler.updateScore()
             Handler.finishGame(game.id)

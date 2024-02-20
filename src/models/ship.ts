@@ -52,16 +52,35 @@ export class Ship {
     getNearbyCells() {
         const result = []
         if (!this.direction) {
-            for (let i = this.position.x - 1; i < this.length; i++) {
+            for (
+                let i = this.position.x - 1;
+                i <= this.position.x + this.length;
+                i++
+            ) {
                 result.push({ x: i, y: this.position.y - 1 })
                 result.push({ x: i, y: this.position.y + 1 })
             }
+            result.push({
+                x: this.position.x + this.length,
+                y: this.position.y,
+            })
+            result.push({ x: this.position.x - 1, y: this.position.y })
         } else {
-            for (let i = this.position.y - 1; i < this.length; i++) {
+            for (
+                let i = this.position.y - 1;
+                i <= this.position.y + this.length;
+                i++
+            ) {
                 result.push({ x: this.position.x - 1, y: i })
                 result.push({ x: this.position.x + 1, y: i })
             }
+            result.push({
+                x: this.position.x,
+                y: this.position.y + this.length,
+            })
+            result.push({ x: this.position.x, y: this.position.y - 1 })
         }
-        return result
+
+        return result.filter(({ x, y }) => x >= 0 && x < 10 && y >= 0 && y < 10)
     }
 }

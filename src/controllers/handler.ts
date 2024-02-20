@@ -16,16 +16,6 @@ export class Handler {
         RoomController.addRoom(room)
 
         return room
-
-        // return {
-        //     data: [
-        //         {
-        //             roomId: room.roomId,
-        //             roomUsers: room.users,
-        //         },
-        //     ],
-        //     type: ResponseType.UPDATE_ROOMS,
-        // }
     }
 
     static addUserToRoom(userId: number, roomId: number): RoomResponseData[] {
@@ -52,16 +42,6 @@ export class Handler {
             name: u.name,
         }))
 
-        // return {
-        //     data: [
-        //         {
-        //             roomId: room.roomId,
-        //             roomUsers: roomUsers,
-        //         },
-        //     ],
-        //     type: ResponseType.UPDATE_ROOMS,
-        // }
-
         return [
             {
                 roomId: room.roomId,
@@ -79,13 +59,15 @@ export class Handler {
 
         const game = new Game(room.roomId)
         GameController.addGame(game)
+        room.addGameId(game.id)
+        RoomController.saveRoom(room)
 
         return this.addUserToGame(userId, game.id)
     }
 
     static addUserToGame(userId: number, gameId: number) {
         const game = GameController.getGame(gameId)
-  
+
         if (!game) {
             throw new Error('Game not found')
         }
@@ -107,14 +89,6 @@ export class Handler {
         }
 
         game.addShips(userId, data.ships)
-
-        // return {
-        //     data: {
-        //         ships: game.getShips(id),
-        //         currentPlayerIndex: id,
-        //     },
-        //     type: ResponseType.START_GAME,
-        // }
     }
 
     static startGame(userId: number): StartGameResponseData {
@@ -128,13 +102,6 @@ export class Handler {
             ships: game.getShips(userId),
             currentPlayerIndex: userId,
         }
-        // return {
-        //     data: {
-        //         ships: game.getShips(userId),
-        //         currentPlayerIndex: userId,
-        //     },
-        //     type: ResponseType.START_GAME,
-        // }
     }
 
     static attack(userId: number, data: AttackRequestData): AttackResponse {
@@ -164,13 +131,16 @@ export class Handler {
         return this.attack(userId, { ...data, x, y })
     }
 
-    static buildTurnResponse(game: Game, currentPlayerId: number): PlayerTurnResponse {
+    static buildTurnResponse(
+        game: Game,
+        currentPlayerId: number
+    ): PlayerTurnResponse {
         const secondPlayerId = game.getNextPlayerIndex(currentPlayerId)
         const nextTurnId =
-                game.lastAttackStatus === AttackStatus.KILLED ||
-                game.lastAttackStatus === AttackStatus.SHOT
-                    ? currentPlayerId
-                    : secondPlayerId
+            game.lastAttackStatus === AttackStatus.KILLED ||
+            game.lastAttackStatus === AttackStatus.SHOT
+                ? currentPlayerId
+                : secondPlayerId
         return { currentPlayer: nextTurnId }
     }
 
@@ -199,40 +169,5 @@ export class Handler {
 
     static updateScore(): ScoreResponseData[] {
         return ScoreController.total
-
-        // {
-        //     name: string;
-        //     wins: number;
-        // }[]
     }
 }
-
-// const getRequestHandler = (type: RequestTypeValue) => {
-//     switch (type) {
-//         case RequestType.REGISTER:
-//             return Handlers.createUser
-//         case RequestType.CREATE_ROOM:
-//             return Handlers.createRoom
-//         case RequestType.ADD_USER_TO_ROOM:
-//             return Handlers.addUserToRoom
-//         case RequestType.ADD_SHIPS:
-//             return Handlers.addShips
-//         case RequestType.ATTACK:
-//             return Handlers.attack
-//         // case RequestType.RANDOM_ATTACK:
-//         //     return Handlers.finishGame
-//         default:
-//             throw new Error('Invalid request type')
-//     }
-// }
-
-// export const handleRequestByType = (
-//     type: RequestTypeValue,
-//     data: RequestData,
-//     id: number
-// ): ResponseMessage<ResponseData> | void => {
-//     const handler = getRequestHandler(type)
-//     const response = handler(id, data)
-
-//     return response
-// }

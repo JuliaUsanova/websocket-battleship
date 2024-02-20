@@ -29,9 +29,11 @@ export class Game {
             throw new Error('Enemy not found')
         }
 
+        this.lastAttackStatus = AttackStatus.MISS
+        this.lastAffectedCells = [{ x, y }]
+
         const playerShips = this.getShips(enemyIndex)
         const attackedShip = playerShips.find((ship) => ship.isHit(x, y))
-        this.lastAttackStatus = AttackStatus.MISS
 
         if (attackedShip) {
             attackedShip.addHit()
@@ -39,13 +41,13 @@ export class Game {
             this.lastAttackStatus = attackedShip.isKilled()
                 ? AttackStatus.KILLED
                 : AttackStatus.SHOT
+
             this.lastAffectedCells =
                 this.lastAttackStatus === AttackStatus.KILLED
                     ? attackedShip?.getNearbyCells()
                     : [{ x, y }]
         }
 
-        this.lastAffectedCells = [{ x, y }]
         this.updateStatus()
     }
 

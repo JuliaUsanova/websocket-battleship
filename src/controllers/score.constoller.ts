@@ -2,6 +2,7 @@ const _score = new Map<string, number>()
 
 export class ScoreController {
     static get total() {
+        debugger
         return Array.from(_score.entries()).map(([name, wins]) => {
             return { name, wins }
         })
@@ -13,6 +14,7 @@ export class ScoreController {
         } else {
             _score.set(name, 1)
         }
+        debugger
     }
 
     static reset() {
