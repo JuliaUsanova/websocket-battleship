@@ -1,9 +1,5 @@
-import {
-    GAME_STATUS,
-    RequestType,
-
-    ResponseType,
-} from '../constants'
+import { GAME_STATUS, RequestType, ResponseType } from '../constants'
+import { AttackStatus } from '../constants/constants'
 import { WsRequestMessage, WsResponseMessage } from '../models'
 import { isUser } from '../type-guards'
 import { GameController } from './game.controller'
@@ -11,91 +7,59 @@ import { Handler } from './handler'
 import { RoomController } from './room.controller'
 
 export class SequentialRequestHandler {
-    handleRequestByType(request: WsRequestMessage<RequestData>, userId: number) {
+    handleRequestByType(
+        request: WsRequestMessage<RequestData>,
+        userId: number
+    ) {
         const handler = this.getHandlersQueeue(request.type)
         return handler(userId, request.data)
     }
 
     private getHandlersQueeue: (
         type: RequestTypeValue
-    ) => (userId: number, data: RequestData) => ResponseMessagesQueue =
-        (type) => {
-            switch (type) {
-                case RequestType.REGISTER:
-                    if (RoomController.getActiveRooms().length) {
-                        return this.addUserToActiveRoom
-                    } else {
-                        return this.createUserAndRoom
-                    }
-                // // if no active room, create room
-                // ;['createUser', 'createRoom', 'addUserToRoom', 'updateScore']
-                // return [
-                //     'register - message for only reqistered client',
-                //     'updateRoom',
-                //     'updateWinners',
-                // ]
-                // // if active room, add user to room and create game
-                // return [
-                //     'register',
-                //     'updateRoom',
-                //     'updateWinners',
-                //     'createGame - message for each client with its own id',
-                // ]
-                case RequestType.ADD_SHIPS:
-                    return this.addShips
-                // // if another player doesn't have ships, wait
-                // return []
-                // // if another player has ships, start game
-                // return [
-                //     'startGame',
-                //     'turn - message for each client with current user id',
-                // ]
-                case RequestType.ATTACK:
-                    return this.attack
-                // return [
-                //     'attackResponse',
-                //     'turn - message for each client with current user id',
-                // ]
-                // // in case game is finished
-                // return [
-                //     'finish',
-                //     'updateWinners',
-                //     'clearRoom - do not send the message',
-                // ]
-                case RequestType.RANDOM_ATTACK:
-                    // return [
-                    //     'attackResponse',
-                    //     'turn - message for each client with current user id',
-                    // ]
-                    // // in case game is finished
-                    // return [
-                    //     'finish',
-                    //     'updateWinners',
-                    //     'clearRoom - do not send the message',
-                    // ]
-                    return this.randomAttack
-                default:
-                    throw new Error('Invalid request type')
-            }
+    ) => (userId: number, data: RequestData) => ResponseMessagesQueue = (
+        type
+    ) => {
+
+        switch (type) {
+            case RequestType.REGISTER:
+                if (RoomController.getActiveRooms().length) {
+                    return this.addUserToActiveRoom.bind(this)
+                } else {
+                    return this.createUserAndRoom.bind(this)
+                }
+            case RequestType.CREATE_ROOM:
+            case RequestType.ADD_USER_TO_ROOM:
+                // do nothing
+                return () => []
+            case RequestType.ADD_SHIPS:
+                return this.addShips.bind(this)
+            case RequestType.ATTACK:
+                return this.attack.bind(this)
+            case RequestType.RANDOM_ATTACK:
+                return this.randomAttack.bind(this)
+            default:
+                throw new Error('Invalid request type')
         }
+    }
 
     private buildResponseMessageQueue: () => {
         add: (
             message: ResponseMessage<ResponseData>,
-            shouldUpdateAllClients: boolean
+            recepientsIds: number[]
         ) => void
         result: () => ResponseMessagesQueue
     } = () => {
         const messages: ResponseMessagesQueue = []
 
         return {
-            add: (message, shouldUpdateAllClients) => {
+            add: (message, recepientsIds) => {
                 if (!message) {
                     return
                 }
                 messages.push({
                     message: new WsResponseMessage(message),
-                    shouldUpdateAllClients,
+                    recepientsIds,
                 })
             },
             result: () => messages,
@@ -117,10 +81,14 @@ export class SequentialRequestHandler {
         const activeRoom = Handler.addUserToRoom(userId, room.roomId)
         const score = Handler.updateScore()
         const queue = this.buildResponseMessageQueue()
+        const roomUsers = room.users
 
-        queue.add({ data: user, type: ResponseType.REGISTER }, false)
-        queue.add({ data: activeRoom, type: ResponseType.UPDATE_ROOMS }, true)
-        queue.add({ data: score, type: ResponseType.UPDATE_SCORE }, true)
+        queue.add({ data: user, type: ResponseType.REGISTER }, [userId])
+        queue.add(
+            { data: activeRoom, type: ResponseType.UPDATE_ROOMS },
+            roomUsers
+        )
+        queue.add({ data: score, type: ResponseType.UPDATE_SCORE }, roomUsers)
 
         return queue.result()
     }
@@ -147,16 +115,19 @@ export class SequentialRequestHandler {
         const queue = this.buildResponseMessageQueue()
         const game = Handler.createGame(userId)
         const secondPlayerId = room.users.find((u) => u !== userId)!
-        const addUserToGame = Handler.addUserToGame(userId, secondPlayerId)
+        const addUserToGame = Handler.addUserToGame(secondPlayerId, game.idGame)
+        const roomUsers = room.users
 
-        queue.add({ data: user, type: ResponseType.REGISTER }, false)
-        queue.add({ data: activeRoom, type: ResponseType.UPDATE_ROOMS }, true)
-        queue.add({ data: score, type: ResponseType.UPDATE_SCORE }, true)
-        queue.add({ data: game, type: ResponseType.CREATE_GAME }, false)
+        queue.add({ data: user, type: ResponseType.REGISTER }, [userId])
         queue.add(
-            { data: addUserToGame, type: ResponseType.CREATE_GAME },
-            false
+            { data: activeRoom, type: ResponseType.UPDATE_ROOMS },
+            roomUsers
         )
+        queue.add({ data: score, type: ResponseType.UPDATE_SCORE }, roomUsers)
+        queue.add({ data: game, type: ResponseType.CREATE_GAME }, [userId])
+        queue.add({ data: addUserToGame, type: ResponseType.CREATE_GAME }, [
+            secondPlayerId,
+        ])
 
         return queue.result()
     }
@@ -172,13 +143,6 @@ export class SequentialRequestHandler {
             )
         }
 
-        // // if another player doesn't have ships, wait
-        // return []
-        // // if another player has ships, start game
-        // return [
-        //     'startGame',
-        //     'turn - message for each client with current user id',
-        // ]
         const currentPlayerId = data.indexPlayer
 
         if (userId !== currentPlayerId) {
@@ -186,7 +150,7 @@ export class SequentialRequestHandler {
         }
 
         Handler.addShips(currentPlayerId, data)
-        const game = GameController.getGame(currentPlayerId)
+        const game = GameController.getGame(data.gameId)
 
         if (!game) {
             throw new Error('Game not found')
@@ -195,40 +159,27 @@ export class SequentialRequestHandler {
         const queue = this.buildResponseMessageQueue()
 
         if (game?.status === GAME_STATUS.STARTED) {
-            const secondPlayerId = game.getNextPlayerIndex(
-                data.indexPlayer
-            )!
-
-            const gameStarted1 = Handler.startGame(data.indexPlayer)
+            const secondPlayerId = game.getNextPlayerIndex(currentPlayerId)!
+            const gameStarted1 = Handler.startGame(currentPlayerId)
             const gameStarted2 = Handler.startGame(secondPlayerId)
-            const turn = Handler.buildTurnResponse(secondPlayerId)
+            const turn = Handler.buildTurnResponse(game, currentPlayerId)
 
-            queue.add(
-                { data: gameStarted1, type: ResponseType.START_GAME },
-                false
-            )
-            queue.add(
-                { data: gameStarted2, type: ResponseType.START_GAME },
-                false
-            )
-            queue.add({ data: turn, type: ResponseType.PLAYER_TURN }, true)
+            queue.add({ data: gameStarted1, type: ResponseType.START_GAME }, [
+                currentPlayerId,
+            ])
+            queue.add({ data: gameStarted2, type: ResponseType.START_GAME }, [
+                secondPlayerId,
+            ])
+            queue.add({ data: turn, type: ResponseType.PLAYER_TURN }, [
+                currentPlayerId,
+                secondPlayerId,
+            ])
         }
 
         return queue.result()
     }
 
     private attack(userId: number, data: RequestData) {
-        // return [
-        //     'attackResponse',
-        //     'turn - message for each client with current user id',
-        // ]
-        // // in case game is finished
-        // return [
-        //     'finish',
-        //     'updateWinners',
-        //     'clearRoom - do not send the message',
-        // ]
-
         if (!('gameId' in data) || !('x' in data) || !('y' in data)) {
             throw new Error('Please provide required fields: gameId, x and y')
         }
@@ -241,23 +192,32 @@ export class SequentialRequestHandler {
 
         const queue = this.buildResponseMessageQueue()
         const attackResult = Handler.attack(currentPlayerId, data)
-        
-        queue.add({ data: attackResult, type: ResponseType.ATTACK }, true)
-
         const game = GameController.getGame(data.gameId)
 
         if (!game) {
             throw new Error('Game not found')
         }
 
+        const secondPlayerId = game.getNextPlayerIndex(currentPlayerId)
+        queue.add({ data: attackResult, type: ResponseType.ATTACK }, [
+            currentPlayerId,
+            secondPlayerId,
+        ])
+
         if (game.status === GAME_STATUS.FINISHED) {
             const winners = Handler.updateScore()
             Handler.finishGame(game.id)
 
-            queue.add({ data: winners, type: ResponseType.UPDATE_SCORE }, true)
+            queue.add({ data: winners, type: ResponseType.UPDATE_SCORE }, [
+                currentPlayerId,
+                secondPlayerId,
+            ])
         } else {
-            const turn = Handler.buildTurnResponse(currentPlayerId)
-            queue.add({ data: turn, type: ResponseType.PLAYER_TURN }, true)
+            const turn = Handler.buildTurnResponse(game, currentPlayerId)
+            queue.add({ data: turn, type: ResponseType.PLAYER_TURN }, [
+                currentPlayerId,
+                secondPlayerId,
+            ])
         }
 
         return queue.result()
@@ -269,16 +229,7 @@ export class SequentialRequestHandler {
                 'Please provide required fields: gameId, indexPlayer'
             )
         }
-        // return [
-        //     'attackResponse',
-        //     'turn - message for each client with current user id',
-        // ]
-        // // in case game is finished
-        // return [
-        //     'finish',
-        //     'updateWinners',
-        //     'clearRoom - do not send the message',
-        // ]
+
         const currentPlayerId = data.indexPlayer
 
         if (userId !== currentPlayerId) {
@@ -287,23 +238,31 @@ export class SequentialRequestHandler {
 
         const queue = this.buildResponseMessageQueue()
         const attackResult = Handler.randomAttack(currentPlayerId, data)
-
-        queue.add({ data: attackResult, type: ResponseType.ATTACK }, true)
-
         const game = GameController.getGame(data.gameId)
 
         if (!game) {
             throw new Error('Game not found')
         }
 
+        const secondPlayerId = game.getNextPlayerIndex(currentPlayerId)
+        queue.add({ data: attackResult, type: ResponseType.ATTACK }, [
+            currentPlayerId,
+            secondPlayerId,
+        ])
         if (game.status === GAME_STATUS.FINISHED) {
             const winners = Handler.updateScore()
             Handler.finishGame(game.id)
 
-            queue.add({ data: winners, type: ResponseType.UPDATE_SCORE }, true)
+            queue.add({ data: winners, type: ResponseType.UPDATE_SCORE }, [
+                currentPlayerId,
+                secondPlayerId,
+            ])
         } else {
-            const turn = Handler.buildTurnResponse(currentPlayerId)
-            queue.add({ data: turn, type: ResponseType.PLAYER_TURN }, true)
+            const turn = Handler.buildTurnResponse(game, currentPlayerId)
+            queue.add({ data: turn, type: ResponseType.PLAYER_TURN }, [
+                currentPlayerId,
+                secondPlayerId,
+            ])
         }
 
         return queue.result()

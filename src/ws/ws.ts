@@ -2,6 +2,8 @@ import { WebSocket, WebSocketServer } from 'ws'
 import { Serializer } from '../serializer'
 import { SequentialRequestHandler } from '../controllers'
 
+const wsMap = new Map<number, WebSocket>()
+
 export class WebSocketServerBattleShip {
     private wsServer: WebSocketServer
     private requestHandler = new SequentialRequestHandler()
@@ -11,6 +13,7 @@ export class WebSocketServerBattleShip {
 
         this.wsServer.on('connection', (ws, request) => {
             const id = Date.now()
+            wsMap.set(id, ws)
 
             console.log(
                 `Websocket is created on port ${port}! WS address: ${request.headers.host}, ws id: ${id}`
@@ -70,23 +73,17 @@ export class WebSocketServerBattleShip {
                 const responseMessages =
                     this.requestHandler.handleRequestByType(request, id)
 
-                // TODO: PASS CLIENT ID INSTEAD OF shouldUpdateAllClients, AND TO SEND MESSAGE, LOOK FOR PARTICULAR CLIENT
-                responseMessages.forEach(
-                    ({ message, shouldUpdateAllClients }) => {
-                        ws.send(Serializer.serialize(message))
-
-                        if (shouldUpdateAllClients) {
-                            this.wsServer.clients.forEach((client) => {
-                                if (client !== ws && client.readyState === 1) {
-                                    client.send(Serializer.serialize(message))
-                                }
-                            })
+                responseMessages.forEach(({ message, recepientsIds }) => {
+                    for (const [wsId, client] of wsMap.entries()) {
+                        if (recepientsIds.includes(wsId) && client.readyState === 1) {
+                            client.send(Serializer.serialize(message))
                         }
                     }
-                )
+                })
             } catch (error) {
+                debugger
                 console.error('Error on message', error)
-                this.closeAllConnections(500, JSON.stringify(error))
+                // this.closeAllConnections(500, JSON.stringify(error))
             }
         })
 

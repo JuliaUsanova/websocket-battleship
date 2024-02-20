@@ -1,3 +1,4 @@
+import { AttackStatus } from '../constants/constants'
 import { Game, Room, User } from '../models'
 import { GameController } from './game.controller'
 import { RoomController } from './room.controller'
@@ -77,13 +78,14 @@ export class Handler {
         }
 
         const game = new Game(room.roomId)
+        GameController.addGame(game)
 
         return this.addUserToGame(userId, game.id)
     }
 
     static addUserToGame(userId: number, gameId: number) {
         const game = GameController.getGame(gameId)
-
+  
         if (!game) {
             throw new Error('Game not found')
         }
@@ -98,7 +100,7 @@ export class Handler {
     }
 
     static addShips(userId: number, data: AddShipsRequestData): void {
-        const game = GameController.getActiveGameByUserId(userId)
+        const game = GameController.getGame(data.gameId)
 
         if (!game) {
             throw new Error('Game not found')
@@ -162,9 +164,14 @@ export class Handler {
         return this.attack(userId, { ...data, x, y })
     }
 
-    static buildTurnResponse(userId: number): PlayerTurnResponse {
-        // const turn = game?.getNextPlayerIndex(userId)
-        return { currentPlayer: userId }
+    static buildTurnResponse(game: Game, currentPlayerId: number): PlayerTurnResponse {
+        const secondPlayerId = game.getNextPlayerIndex(currentPlayerId)
+        const nextTurnId =
+                game.lastAttackStatus === AttackStatus.KILLED ||
+                game.lastAttackStatus === AttackStatus.SHOT
+                    ? currentPlayerId
+                    : secondPlayerId
+        return { currentPlayer: nextTurnId }
     }
 
     static finishGame(gameId: number): void {

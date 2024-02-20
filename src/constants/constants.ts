@@ -35,7 +35,7 @@ export enum RoomRequestType {
 export enum GameRequestType {
     ADD_SHIPS = 'add_ships',
     ATTACK = 'attack',
-    RANDOM_ATTACK = 'random_attack',
+    RANDOM_ATTACK = 'randomAttack',
 }
 
 export const RequestType = {

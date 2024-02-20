@@ -97,5 +97,5 @@ declare type ResponseTypeValue =
 
 declare type ResponseMessagesQueue = {
     message: WsResponseMessage
-    shouldUpdateAllClients: boolean
+    recepientsIds: number[]
 }[]
