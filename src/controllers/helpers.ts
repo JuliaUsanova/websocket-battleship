@@ -10,8 +10,17 @@ export const isRoomFull = (roomId: number) => {
 }
 
 export const canStartPlaying = (userId: number) => {
-    const game = Database.getGameByUserId(userId)
-    return game?.status === 'ready'
+    const game = Database.getActiveGameByUserId(userId)
+    return game?.status === 'started'
+}
+
+export const getLastHitCells = (userId: number) => {
+    const game = Database.getActiveGameByUserId(userId)
+    return game?.lastAffectedCells
+}
+
+export const getGame = (userId: number) => {
+    return Database.getActiveGameByUserId(userId)
 }
 
 export const getActiveRoom = () => {

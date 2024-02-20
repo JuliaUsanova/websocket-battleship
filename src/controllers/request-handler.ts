@@ -111,10 +111,7 @@ export class Handlers {
         }
     }
 
-    static addShips(
-        id: number,
-        data: RequestData
-    ): ResponseMessage<ResponseData> {
+    static addShips(id: number, data: RequestData): void {
         if (
             !('gameId' in data) ||
             !('ships' in data) ||
@@ -125,26 +122,25 @@ export class Handlers {
             )
         }
 
-        const game = Database.getGameByUserId(id)
+        const game = Database.getActiveGameByUserId(id)
 
         if (!game) {
             throw new Error('Game not found')
         }
 
-        console.log('>>>>>>> INDEX PLAYER FROM UI <<<<<<<<< ', data.indexPlayer)
         game.addShips(id, data.ships)
 
-        return {
-            data: {
-                ships: game.getShips(id),
-                currentPlayerIndex: id,
-            },
-            type: ResponseType.START_GAME,
-        }
+        // return {
+        //     data: {
+        //         ships: game.getShips(id),
+        //         currentPlayerIndex: id,
+        //     },
+        //     type: ResponseType.START_GAME,
+        // }
     }
 
     static startGame(userId: number): ResponseMessage<ResponseData> {
-        const game = Database.getGameByUserId(userId)
+        const game = Database.getActiveGameByUserId(userId)
 
         if (!game) {
             throw new Error('Game not found')
@@ -159,9 +155,61 @@ export class Handlers {
         }
     }
 
-    // static attack(): ResponseMessage<ResponseData> { }
+    static attack(
+        userId: number,
+        data: RequestData
+    ): ResponseMessage<ResponseData> {
+        if (!('gameId' in data) || !('x' in data) || !('y' in data)) {
+            throw new Error('Please provide required fields: gameId, x and y')
+        }
+
+        const game = Database.getActiveGameByUserId(userId)
+
+        if (!game) {
+            throw new Error('Game not found')
+        }
+
+        const { x, y } = data
+        game.attack(userId, { x, y })
+
+        return Handlers.buildAttackResponse(userId, { x, y }, game)
+    }
+
+    static buildAttackResponse(
+        userId: number,
+        { x, y }: { x: number; y: number },
+        game?: Game
+    ): ResponseMessage<ResponseData> {
+        if (!game) {
+            throw new Error('Game not found')
+        }
+
+        return {
+            data: {
+                status: game.lastAttackStatus,
+                position: { x, y },
+                currentPlayer: userId,
+            },
+            type: ResponseType.ATTACK,
+        }
+    }
 
     // static randomAttack(): ResponseMessage<ResponseData> {}
+
+    static buildTurnResponse(userId: number): ResponseMessage<ResponseData> {
+        const game = Database.getActiveGameByUserId(userId)
+
+        if (!game) {
+            throw new Error('Game not found')
+        }
+
+        // const turn = game?.getNextPlayerTurn(userId)
+        return {
+            type: ResponseType.PLAYER_TURN,
+            data: { currentPlayer: userId },
+            // data: { currentPlayer: turn },
+        }
+    }
 
     static updateScore(): ResponseMessage<ResponseData> {
         return {
@@ -181,8 +229,8 @@ const getRequestHandler = (type: RequestTypeValue) => {
             return Handlers.addUserToRoom
         case RequestType.ADD_SHIPS:
             return Handlers.addShips
-        // case RequestType.ATTACK:
-        //     return Handlers.attack
+        case RequestType.ATTACK:
+            return Handlers.attack
         // case RequestType.RANDOM_ATTACK:
         //     return Handlers.finishGame
         default:
@@ -194,7 +242,9 @@ export const handleRequestByType = (
     type: RequestTypeValue,
     data: RequestData,
     id: number
-): ResponseMessage<ResponseData> => {
+): ResponseMessage<ResponseData> | void => {
     const handler = getRequestHandler(type)
-    return handler(id, data)
+    const response = handler(id, data)
+
+    return response
 }

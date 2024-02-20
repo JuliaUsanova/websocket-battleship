@@ -75,7 +75,14 @@ export class Database {
         )
     }
 
-    static getGameByUserId(index: number): Game | undefined {
-        return games.find((game) => game.hasPlayer(index))
+    // TODO: FILTER BY GAME STATUS
+    static getFinishedGamesByUserId(index: number): Game[] {
+        return games.filter((game) => game.hasPlayer(index) && game.status === 'finished')
+    }
+
+    static getActiveGameByUserId(index: number): Game | undefined {
+        return games
+            .filter(({ status }) => status !== 'finished')
+            .find((game) => game.hasPlayer(index))
     }
 }

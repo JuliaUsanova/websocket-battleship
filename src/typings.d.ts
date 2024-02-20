@@ -4,6 +4,7 @@ declare type RequestData =
     | UserRequestData
     | AddUserToRoomData
     | AddShipsRequestData
+    | AttackRequestData
 
 declare type UserRequestData = {
     name: string
@@ -18,6 +19,13 @@ declare type AddShipsRequestData = {
     gameId: number
     ships: import('./models').Ship[]
     indexPlayer: number
+}
+
+declare type AttackRequestData = {
+    gameId: number
+    x: number
+    y: number
+    indexPlayer: number /* id of the player in the current game session */
 }
 
 declare type RequestMessage<T extends RequestData> = {
@@ -35,6 +43,8 @@ declare type ResponseData =
     | ScoreResponseData[]
     | CreateGameResponseData
     | StartGameResponseData
+    | AttackResponse
+    | PlayerTurnResponse
 
 declare type ResponseMessage<T extends ResponseData> = {
     type: ResponseTypeValue
@@ -66,6 +76,19 @@ declare type CreateGameResponseData = {
 declare type StartGameResponseData = {
     ships: import('./models').Ship[]
     currentPlayerIndex: number
+}
+
+declare type AttackResponse = {
+    position: {
+        x: number
+        y: number
+    }
+    currentPlayer: number /* id of the player in the current game session */
+    status: 'miss' | 'killed' | 'shot'
+}
+
+declare type PlayerTurnResponse = {
+    currentPlayer: number
 }
 
 declare type ResponseTypeValue =

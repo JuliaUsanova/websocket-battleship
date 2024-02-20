@@ -45,3 +45,9 @@ export const RequestType = {
 }
 
 export const RequestTypeValues = Object.values(RequestType)
+
+export enum AttackStatus {
+    MISS = 'miss',
+    KILLED = 'killed',
+    SHOT = 'shot',
+}
