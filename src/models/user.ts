@@ -12,6 +12,16 @@ export class User {
         this.index = id
     }
 
+    get meta() {
+        return {
+            name: this.name,
+            index: this.index,
+            error: this.error,
+            errorText: this.errorText,
+        }
+    
+    }
+    
     setError(error: string) {
         this.error = error ? 1 : 0
         this.errorText = error

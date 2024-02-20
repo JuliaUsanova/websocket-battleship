@@ -1,15 +1,16 @@
 import { WebSocket, WebSocketServer } from 'ws'
 import { Serializer } from '../serializer'
-import { GameController } from '../controllers'
+import { SequentialRequestHandler } from '../controllers'
 
 export class WebSocketServerBattleShip {
     private wsServer: WebSocketServer
+    private requestHandler = new SequentialRequestHandler()
 
     public start(port: number) {
         this.wsServer = new WebSocketServer({ port })
 
         this.wsServer.on('connection', (ws, request) => {
-            const id = Date.now();
+            const id = Date.now()
 
             console.log(
                 `Websocket is created on port ${port}! WS address: ${request.headers.host}, ws id: ${id}`
@@ -66,8 +67,10 @@ export class WebSocketServerBattleShip {
 
             try {
                 const request = Serializer.deserialize(data)
-                const responseMessages = GameController.handleRequest(request, id)
+                const responseMessages =
+                    this.requestHandler.handleRequestByType(request, id)
 
+                // TODO: PASS CLIENT ID INSTEAD OF shouldUpdateAllClients, AND TO SEND MESSAGE, LOOK FOR PARTICULAR CLIENT
                 responseMessages.forEach(
                     ({ message, shouldUpdateAllClients }) => {
                         ws.send(Serializer.serialize(message))

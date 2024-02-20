@@ -23,15 +23,15 @@ export class WsResponseMessage {
         }
     }
 }
-export class WsRequestMessage {
+export class WsRequestMessage<T extends RequestData> {
     private _type: RequestTypeValue
-    private _data: RequestData
+    private _data: T
     constructor({
         type,
         data,
     }: {
         type: RequestTypeValue
-        data: RequestData
+        data: T
     }) {
         this._type = type
         this._data = data

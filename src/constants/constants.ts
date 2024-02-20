@@ -51,3 +51,9 @@ export enum AttackStatus {
     KILLED = 'killed',
     SHOT = 'shot',
 }
+
+export const GAME_STATUS = {
+    WAITING: 'waiting',
+    STARTED: 'started',
+    FINISHED: 'finished',
+}

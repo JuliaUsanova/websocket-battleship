@@ -5,5 +5,6 @@ export {
     UserResponseType,
     ResponseTypeValues,
     RequestTypeValues,
-    RequestType
+    RequestType,
+    GAME_STATUS
 } from './constants'

@@ -2,17 +2,13 @@
 // TODO: CLEAN UP RequestData
 declare type RequestData =
     | UserRequestData
-    | AddUserToRoomData
     | AddShipsRequestData
     | AttackRequestData
+    | RandomAttackRequestData
 
 declare type UserRequestData = {
     name: string
-    password: number
-}
-
-declare type AddUserToRoomData = {
-    indexRoom: number
+    password: string
 }
 
 declare type AddShipsRequestData = {
@@ -25,6 +21,11 @@ declare type AttackRequestData = {
     gameId: number
     x: number
     y: number
+    indexPlayer: number /* id of the player in the current game session */
+}
+
+declare type RandomAttackRequestData = {
+    gameId: number
     indexPlayer: number /* id of the player in the current game session */
 }
 
@@ -93,3 +94,8 @@ declare type PlayerTurnResponse = {
 
 declare type ResponseTypeValue =
     (typeof import('./constants').ResponseTypeValues)[number]
+
+declare type ResponseMessagesQueue = {
+    message: WsResponseMessage
+    shouldUpdateAllClients: boolean
+}[]

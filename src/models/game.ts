@@ -10,10 +10,9 @@ export class Game {
     lastAttackStatus: AttackStatus
     lastAffectedCells: { x: number; y: number }[] = []
 
-    constructor(roomId: number, playersIds: number[]) {
+    constructor(roomId: number) {
         this.roomId = roomId
         this.id = id++
-        this.setup(playersIds)
         this.updateStatus()
     }
 
@@ -50,6 +49,16 @@ export class Game {
         this.updateStatus()
     }
 
+    addPlayer(userId: number) {
+        if (this.players.has(userId)) {
+            throw new Error('Player already exists')
+        }
+        if (this.players.size >= 2) {
+            throw new Error('Game is full')
+        }
+        this.players.set(userId, [])
+    }
+
     hasPlayer(playerIndex: number) {
         return this.players.get(playerIndex)
     }
@@ -72,7 +81,7 @@ export class Game {
         this.updateStatus()
     }
 
-    getNextPlayerTurn(playerIndex: number) {
+    getNextPlayerIndex(playerIndex: number) {
         const nextPlayerTurn = Array.from(this.players.keys()).find(
             (playerId) => playerId !== playerIndex
         )
@@ -81,6 +90,18 @@ export class Game {
             throw new Error('Player not found')
         }
         return nextPlayerTurn
+    }
+
+    getWinnerId() {
+        if (this.status !== 'finished') {
+            throw new Error('Game is not finished')
+        }
+        for (const [id, ships] of this.players.entries()) {
+            if (ships.some((ship) => !ship.isKilled())) {
+                return id
+            }
+        }
+        throw new Error('Winner not found')
     }
 
     private updateStatus() {
@@ -95,19 +116,10 @@ export class Game {
             this.status = 'started'
         }
 
-        if (
-            (player1Ships?.length &&
-                player1Ships?.every((ship) => ship.isKilled())) ||
-            (player2Ships?.length &&
-                player2Ships?.every((ship) => ship.isKilled()))
-        ) {
-            this.status = 'finished'
+        for (const [, ships] of this.players.entries()) {
+            if (ships.every((ship) => ship.isKilled())) {
+                this.status = 'finished'
+            }
         }
-    }
-
-    private setup(playersIds: number[]) {
-        playersIds.forEach((id) => {
-            this.players.set(id, [])
-        })
     }
 }
