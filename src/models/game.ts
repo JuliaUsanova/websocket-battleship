@@ -20,7 +20,6 @@ export class Game {
 
     attack(playerIndex: number, { x, y }: { x: number; y: number }) {
         if (this.lastHit?.x === x && this.lastHit?.y === y) {
-            this.lastAttackStatus = AttackStatus.MISS
             return
         }
 
@@ -56,6 +55,7 @@ export class Game {
             }
         }
 
+        this.lastHit = { x, y }
         this.updateStatus()
     }
 

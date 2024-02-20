@@ -179,7 +179,12 @@ export class SequentialRequestHandler {
     }
 
     private attack(userId: number, data: RequestData) {
-        if (!('gameId' in data) || !('x' in data) || !('y' in data)) {
+        if (
+            !('gameId' in data) ||
+            !('x' in data) ||
+            !('y' in data) ||
+            !('indexPlayer' in data)
+        ) {
             throw new Error('Please provide required fields: gameId, x and y')
         }
 
@@ -259,72 +264,9 @@ export class SequentialRequestHandler {
             )
         }
 
-        const currentPlayerId = data.indexPlayer
-        const game = GameController.getGame(data.gameId)
+        const x = Math.floor(Math.random() * 10)
+        const y = Math.floor(Math.random() * 10)
 
-        if (userId !== currentPlayerId) {
-            throw new Error('Invalid user')
-        }
-
-        if (!game) {
-            throw new Error('Game not found')
-        }
-
-        const queue = this.buildResponseMessageQueue()
-        const attackResult = Handler.randomAttack(currentPlayerId, data)
-        const secondPlayerId = game.getNextPlayerIndex(currentPlayerId)
-
-        if (game.killedShip) {
-            game.killedShip.shipCells.forEach((cell) => {
-                const attack = {
-                    status: AttackStatus.KILLED,
-                    position: cell,
-                    currentPlayer: currentPlayerId,
-                }
-                queue.add({ data: attack, type: ResponseType.ATTACK }, [
-                    currentPlayerId,
-                    secondPlayerId,
-                ])
-            })
-
-            game.lastAffectedCells.forEach((cell) => {
-                const attack = {
-                    status: AttackStatus.MISS,
-                    position: cell,
-                    currentPlayer: currentPlayerId,
-                }
-                queue.add({ data: attack, type: ResponseType.ATTACK }, [
-                    currentPlayerId,
-                    secondPlayerId,
-                ])
-            })
-        } else {
-            queue.add({ data: attackResult, type: ResponseType.ATTACK }, [
-                currentPlayerId,
-                secondPlayerId,
-            ])
-        }
-
-        if (game.status === GAME_STATUS.FINISHED) {
-            const winner = Handler.finishGame(game.id)
-            const winners = Handler.updateScore()
-
-            queue.add({ data: winner, type: ResponseType.FINISH_GAME }, [
-                currentPlayerId,
-                secondPlayerId,
-            ])
-            queue.add({ data: winners, type: ResponseType.UPDATE_SCORE }, [
-                currentPlayerId,
-                secondPlayerId,
-            ])
-        } else {
-            const turn = Handler.buildTurnResponse(game, currentPlayerId)
-            queue.add({ data: turn, type: ResponseType.PLAYER_TURN }, [
-                currentPlayerId,
-                secondPlayerId,
-            ])
-        }
-
-        return queue.result()
+        return this.attack(userId, { ...data, x, y })
     }
 }

@@ -121,16 +121,6 @@ export class Handler {
         }
     }
 
-    static randomAttack(
-        userId: number,
-        data: RandomAttackRequestData
-    ): AttackResponse {
-        const x = Math.floor(Math.random() * 10)
-        const y = Math.floor(Math.random() * 10)
-
-        return this.attack(userId, { ...data, x, y })
-    }
-
     static buildTurnResponse(
         game: Game,
         currentPlayerId: number
