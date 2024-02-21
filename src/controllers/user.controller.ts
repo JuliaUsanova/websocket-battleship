@@ -4,15 +4,7 @@ export class UserController {
     private static users: User[] = []
 
     static addUser(user: User) {
-        if (
-            UserController.users.find(
-                (u) => u.name === user.name && u.password === user.password
-            )
-        ) {
-            user.setError('User already exists')
-        }
         UserController.users.push(user)
-
         return user.meta
     }
 

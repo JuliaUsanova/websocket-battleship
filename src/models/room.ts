@@ -1,14 +1,14 @@
 export class Room {
-    private roomUsers: number[] = []
+    private roomUserIds: number[] = []
     games: number[] = []
     roomId: number = Date.now()
 
     get users() {
-        return this.roomUsers
+        return this.roomUserIds
     }
 
     addUser(userId: number) {
-        this.roomUsers.push(userId)
+        this.roomUserIds.push(userId)
     }
 
     addGameId(gameId: number) {
@@ -16,11 +16,6 @@ export class Room {
     }
 
     hasUser(userId: number) {
-        return this.roomUsers.find((index) => index === userId)
-    }
-
-    clear() {
-        this.roomUsers = []
-        this.games = []
+        return this.roomUserIds.find((index) => index === userId)
     }
 }

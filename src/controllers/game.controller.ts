@@ -6,6 +6,7 @@ export class GameController {
 
     static addGame(game: Game) {
         GameController.games.push(game)
+        return game
     }
 
     static saveGame(game: Game) {

@@ -5,6 +5,7 @@ export class RoomController {
 
     static addRoom(room: Room) {
         RoomController.rooms.set(room.roomId, room)
+        return room
     }
 
     static getRoom(roomId: number) {
@@ -21,10 +22,6 @@ export class RoomController {
         return Array.from(RoomController.rooms.values())
     }
 
-    static saveRoom(room: Room) {
-        RoomController.rooms.set(room.roomId, room)
-    }
-
     static getActiveRoomByUserId(userId: number): Room | undefined {
         return RoomController.getRooms()
             .filter(({ games }) => games.length === 0)
@@ -35,5 +32,9 @@ export class RoomController {
         return RoomController.getRooms().find((room) =>
             room.games.includes(gameId)
         )
+    }
+
+    static removeRoom(roomId: number) {
+        RoomController.rooms.delete(roomId)
     }
 }

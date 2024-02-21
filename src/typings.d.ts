@@ -2,6 +2,7 @@
 // TODO: CLEAN UP RequestData
 declare type RequestData =
     | UserRequestData
+    | AddUserToRoomRequestData
     | AddShipsRequestData
     | AttackRequestData
     | RandomAttackRequestData
@@ -9,6 +10,10 @@ declare type RequestData =
 declare type UserRequestData = {
     name: string
     password: string
+}
+
+declare type AddUserToRoomRequestData = {
+    indexRoom: number
 }
 
 declare type AddShipsRequestData = {
@@ -62,7 +67,7 @@ declare type UserResponseData = {
 
 declare type RoomResponseData = {
     roomId: number
-    roomUsers: Pick<User, 'index', 'name'>[]
+    roomUsers: { name: string; index: number }[]
 }
 
 declare type ScoreResponseData = {
@@ -104,3 +109,11 @@ declare type ResponseMessagesQueue = {
     message: WsResponseMessage
     recepientsIds: number[]
 }[]
+
+declare type ResponseMessagesQueueBuilder = {
+    add: (
+        message: ResponseMessage<ResponseData>,
+        recepientsIds: number[]
+    ) => void
+    result: () => ResponseMessagesQueue
+}
