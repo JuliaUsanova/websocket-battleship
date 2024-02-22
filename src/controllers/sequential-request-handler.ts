@@ -167,8 +167,8 @@ export class SequentialRequestHandler {
 
         if (game.status === GAME_STATUS.STARTED) {
             const secondPlayerId = game.getNextPlayerIndex(userId)!
-            const gameStarted1 = handlers.startGame(userId)
-            const gameStarted2 = handlers.startGame(secondPlayerId)
+            const gameStarted1 = handlers.startGame(userId, game.id)
+            const gameStarted2 = handlers.startGame(secondPlayerId, game.id)
             const turn = handlers.buildTurnResponse(data.gameId, userId)
 
             this.responseQueue.add(

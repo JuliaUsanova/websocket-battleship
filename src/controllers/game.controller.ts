@@ -32,10 +32,4 @@ export class GameController {
             (game) => game.status === GAME_STATUS.FINISHED
         )
     }
-
-    static getActiveGameByUserId(index: number): Game | undefined {
-        return GameController.games
-            .filter(({ status }) => status !== GAME_STATUS.FINISHED)
-            .find((game) => game.hasPlayer(index))
-    }
 }

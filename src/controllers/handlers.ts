@@ -139,8 +139,8 @@ export const addShips = (userId: number, data: AddShipsRequestData) => {
     return game
 }
 
-export const startGame = (userId: number): StartGameResponseData => {
-    const game = GameController.getActiveGameByUserId(userId)
+export const startGame = (userId: number, gameId: number): StartGameResponseData => {
+    const game = GameController.getGame(gameId)
 
     if (!game) {
         throw new NotFoundError('game')
