@@ -3,9 +3,9 @@ import { Ship } from './'
 
 let id = 0
 export class Game {
+    private players = new Map<number, Ship[]>()
     id: number
     status: 'waiting' | 'started' | 'finished' = 'waiting'
-    players = new Map<number, Ship[]>()
     roomId: number
     lastAttackStatus: AttackStatus
     lastAffectedCells: { x: number; y: number }[] = []
@@ -18,6 +18,10 @@ export class Game {
         this.updateStatus()
     }
 
+    get playersIds() {
+        return Array.from(this.players.keys())
+    }
+    
     attack(playerIndex: number, { x, y }: { x: number; y: number }) {
         if (this.lastHit?.x === x && this.lastHit?.y === y) {
             return

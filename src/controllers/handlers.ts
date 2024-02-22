@@ -120,7 +120,6 @@ export const addUserToGame = (userId: number, gameId: number) => {
     }
 
     game.addPlayer(userId)
-    // GameController.saveGame(game)
 
     return {
         idGame: game.id,
@@ -136,6 +135,8 @@ export const addShips = (userId: number, data: AddShipsRequestData) => {
     }
 
     game.addShips(userId, data.ships)
+
+    return game
 }
 
 export const startGame = (userId: number): StartGameResponseData => {
@@ -154,7 +155,8 @@ export const startGame = (userId: number): StartGameResponseData => {
 export const buildAttackResponse = (
     userId: number,
     data: AttackRequestData
-): AttackResponse => {
+): AttackResponse[] => {
+    const attackResults = []
     const game = GameController.getGame(data.gameId)
 
     if (!game) {
@@ -164,17 +166,47 @@ export const buildAttackResponse = (
     const { x, y } = data
     game.attack(userId, { x, y })
 
-    return {
-        status: game.lastAttackStatus,
-        position: { x, y },
-        currentPlayer: userId,
+    if (game.killedShip) {
+        game.killedShip.shipCells.forEach((cell) => {
+            const attack = {
+                status: AttackStatus.KILLED,
+                position: cell,
+                currentPlayer: userId,
+            }
+            attackResults.push(attack)
+        })
+
+        game.lastAffectedCells.forEach((cell) => {
+            const attack = {
+                status: AttackStatus.MISS,
+                position: cell,
+                currentPlayer: userId,
+            }
+            attackResults.push(attack)
+        })
+    } else {
+        const attack = {
+            status: game.lastAttackStatus,
+            position: { x, y },
+            currentPlayer: userId,
+        }
+
+        attackResults.push(attack)
     }
+
+    return attackResults
 }
 
 export const buildTurnResponse = (
-    game: Game,
+    gameId: number,
     currentPlayerId: number
 ): PlayerTurnResponse => {
+    const game = GameController.getGame(gameId)
+
+    if (!game) {
+        throw new NotFoundError('game', gameId)
+    }
+
     const secondPlayerId = game.getNextPlayerIndex(currentPlayerId)
     const nextTurnId =
         game.lastAttackStatus === AttackStatus.KILLED ||

@@ -1,7 +1,5 @@
 import { GAME_STATUS, RequestType, ResponseType } from '../constants'
-import { AttackStatus } from '../constants/constants'
 import {
-    DuplicatedUserInTheRoomError,
     InvalidRequestError,
     MissingRequiredFieldsError,
     NotFoundError,
@@ -88,7 +86,6 @@ export class SequentialRequestHandler {
 
     private createRoom(userId: number): ResponseMessagesQueue {
         const activeRooms = handlers.createRoom(userId)
-    
 
         this.responseQueue.add(
             { data: activeRooms, type: ResponseType.UPDATE_ROOMS },
@@ -162,28 +159,21 @@ export class SequentialRequestHandler {
             )
         }
 
-        const currentPlayerId = data.indexPlayer
-
-        if (userId !== currentPlayerId) {
-            throw new NotFoundError('user', currentPlayerId)
+        if (userId !== data.indexPlayer) {
+            throw new NotFoundError('user', userId)
         }
 
-        handlers.addShips(currentPlayerId, data)
-        const game = GameController.getGame(data.gameId)
+        const game = handlers.addShips(userId, data)
 
-        if (!game) {
-            throw new NotFoundError('game', data.gameId)
-        }
-
-        if (game?.status === GAME_STATUS.STARTED) {
-            const secondPlayerId = game.getNextPlayerIndex(currentPlayerId)!
-            const gameStarted1 = handlers.startGame(currentPlayerId)
+        if (game.status === GAME_STATUS.STARTED) {
+            const secondPlayerId = game.getNextPlayerIndex(userId)!
+            const gameStarted1 = handlers.startGame(userId)
             const gameStarted2 = handlers.startGame(secondPlayerId)
-            const turn = handlers.buildTurnResponse(game, currentPlayerId)
+            const turn = handlers.buildTurnResponse(data.gameId, userId)
 
             this.responseQueue.add(
                 { data: gameStarted1, type: ResponseType.START_GAME },
-                [currentPlayerId]
+                [userId]
             )
             this.responseQueue.add(
                 { data: gameStarted2, type: ResponseType.START_GAME },
@@ -191,7 +181,7 @@ export class SequentialRequestHandler {
             )
             this.responseQueue.add(
                 { data: turn, type: ResponseType.PLAYER_TURN },
-                [currentPlayerId, secondPlayerId]
+                game.playersIds
             )
         }
 
@@ -203,68 +193,44 @@ export class SequentialRequestHandler {
             throw new MissingRequiredFieldsError('gameId, x and y')
         }
 
-        const currentPlayerId = data.indexPlayer
         const game = GameController.getGame(data.gameId)
 
-        if (userId !== currentPlayerId) {
-            throw new NotFoundError('user', currentPlayerId)
+        if (userId !== data.indexPlayer) {
+            throw new NotFoundError('user', userId)
         }
 
         if (!game) {
             throw new NotFoundError('game', data.gameId)
         }
 
-        const attackResult = handlers.buildAttackResponse(currentPlayerId, data)
-        const secondPlayerId = game.getNextPlayerIndex(currentPlayerId)
+        const playersIds = game.playersIds
+        const attackResults = handlers.buildAttackResponse(userId, data)
 
-        if (game.killedShip) {
-            game.killedShip.shipCells.forEach((cell) => {
-                const attack = {
-                    status: AttackStatus.KILLED,
-                    position: cell,
-                    currentPlayer: currentPlayerId,
-                }
-                this.responseQueue.add(
-                    { data: attack, type: ResponseType.ATTACK },
-                    [currentPlayerId, secondPlayerId]
-                )
-            })
-
-            game.lastAffectedCells.forEach((cell) => {
-                const attack = {
-                    status: AttackStatus.MISS,
-                    position: cell,
-                    currentPlayer: currentPlayerId,
-                }
-                this.responseQueue.add(
-                    { data: attack, type: ResponseType.ATTACK },
-                    [currentPlayerId, secondPlayerId]
-                )
-            })
-        } else {
+        attackResults.forEach((attackResult) => {
             this.responseQueue.add(
                 { data: attackResult, type: ResponseType.ATTACK },
-                [currentPlayerId, secondPlayerId]
+                playersIds
             )
-        }
+        })
 
         if (game.status === GAME_STATUS.FINISHED) {
-            const winner = handlers.finishGame(game.id)
-            const winners = handlers.updateScore()
+            const winner = handlers.finishGame(data.gameId)
+            const score = handlers.updateScore()
 
             this.responseQueue.add(
                 { data: winner, type: ResponseType.FINISH_GAME },
-                [currentPlayerId, secondPlayerId]
+                playersIds
             )
             this.responseQueue.add(
-                { data: winners, type: ResponseType.UPDATE_SCORE },
-                [currentPlayerId, secondPlayerId]
+                { data: score, type: ResponseType.UPDATE_SCORE },
+                playersIds
             )
         } else {
-            const turn = handlers.buildTurnResponse(game, currentPlayerId)
+            const turn = handlers.buildTurnResponse(data.gameId, userId)
+
             this.responseQueue.add(
                 { data: turn, type: ResponseType.PLAYER_TURN },
-                [currentPlayerId, secondPlayerId]
+                playersIds
             )
         }
 
