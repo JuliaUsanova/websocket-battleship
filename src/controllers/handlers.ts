@@ -29,8 +29,30 @@ export const createUser = (
     }
 }
 
-export const createRoom = (): Room => {
-    return RoomController.addRoom(new Room())
+export const createRoom = (userId: number): RoomResponseData[] => {
+    const user = UserController.getUser(userId)
+
+    if (!user) {
+        throw new NotFoundError('user', userId)
+    }
+
+    const userRooms = user.rooms
+
+    if (userRooms.length > 0) {
+        userRooms.forEach((roomId) => {
+            const activeRoom = RoomController.getRoom(roomId)
+            if (activeRoom && activeRoom.users.length === 1) {
+                throw new DuplicatedUserInTheRoomError(user.name)
+            }
+        })
+    }
+
+    const room = RoomController.addRoom(new Room())
+    user.addRoom(room.roomId)
+
+    addUserToRoom(userId, room.roomId)
+
+    return getActiveRooms()
 }
 
 export const getUpdateRoomRecepients = (): number[] => {
@@ -129,7 +151,7 @@ export const startGame = (userId: number): StartGameResponseData => {
     }
 }
 
-export const attack = (
+export const buildAttackResponse = (
     userId: number,
     data: AttackRequestData
 ): AttackResponse => {

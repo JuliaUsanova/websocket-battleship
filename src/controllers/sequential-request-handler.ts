@@ -87,11 +87,8 @@ export class SequentialRequestHandler {
     }
 
     private createRoom(userId: number): ResponseMessagesQueue {
-        const room = handlers.createRoom()
-
-        handlers.addUserToRoom(userId, room.roomId)
-
-        const activeRooms = handlers.getActiveRooms()
+        const activeRooms = handlers.createRoom(userId)
+    
 
         this.responseQueue.add(
             { data: activeRooms, type: ResponseType.UPDATE_ROOMS },
@@ -110,9 +107,7 @@ export class SequentialRequestHandler {
         }
 
         const user = handlers.createUser(userId, data)
-        const room = handlers.createRoom()
-        handlers.addUserToRoom(userId, room.roomId)
-        const activeRooms = handlers.getActiveRooms()
+        const activeRooms = handlers.createRoom(userId)
         const score = handlers.updateScore()
         const recepientsIds = handlers.getUpdateRoomRecepients()
 
@@ -219,7 +214,7 @@ export class SequentialRequestHandler {
             throw new NotFoundError('game', data.gameId)
         }
 
-        const attackResult = handlers.attack(currentPlayerId, data)
+        const attackResult = handlers.buildAttackResponse(currentPlayerId, data)
         const secondPlayerId = game.getNextPlayerIndex(currentPlayerId)
 
         if (game.killedShip) {

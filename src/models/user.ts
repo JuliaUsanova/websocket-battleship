@@ -3,6 +3,7 @@ export class User {
     password: string
     index: number
     games: number[] = []
+    rooms: number[] = []
 
     constructor({ name, password, id }: { name: string; password: string, id: number}) {
         this.name = name
@@ -16,6 +17,10 @@ export class User {
             index: this.index,
         }
     
+    }
+
+    addRoom(roomId: number) {
+        this.rooms.push(roomId)
     }
 
     addGame(gameId: number) {
