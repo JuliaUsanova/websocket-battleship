@@ -1,5 +1,6 @@
 import { ResponseTypeValues } from '../constants'
 import { RequestTypeValues } from '../constants/constants'
+import { DuplicatedUserInTheRoomError, InvalidRequestError, MissingRequiredFieldsError, NotFoundError } from '../custom-errors'
 import { WsRequestMessage, WsResponseMessage } from '../models'
 
 export const isUserRequestData = (
@@ -53,5 +54,20 @@ export const isValidRequest = (
         request.type &&
         RequestTypeValues.includes(request.type) &&
         typeof request.data === 'string'
+    )
+}
+
+export const isCustomError = (
+    error: unknown
+): error is
+    | NotFoundError
+    | DuplicatedUserInTheRoomError
+    | MissingRequiredFieldsError
+    | InvalidRequestError => {
+    return (
+        error instanceof NotFoundError ||
+        error instanceof DuplicatedUserInTheRoomError ||
+        error instanceof MissingRequiredFieldsError ||
+        error instanceof InvalidRequestError
     )
 }

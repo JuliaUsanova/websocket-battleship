@@ -55,7 +55,7 @@ export class Ship {
         )
     }
 
-    isKilled() {
+    get isKilled() {
         return this.hitCells === this.length
     }
 

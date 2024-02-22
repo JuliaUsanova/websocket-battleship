@@ -1,6 +1,7 @@
 import { WebSocket, WebSocketServer } from 'ws'
 import { Serializer } from '../serializer'
 import { SequentialRequestHandler } from '../controllers'
+import { isCustomError } from '../type-guards'
 
 const wsMap = new Map<number, WebSocket>()
 
@@ -32,6 +33,7 @@ export class WebSocketServerBattleShip {
         })
 
         this.wsServer.close()
+        process.exit(1)
     }
 
     private closeWSConnection(
@@ -75,15 +77,20 @@ export class WebSocketServerBattleShip {
 
                 responseMessages.forEach(({ message, recepientsIds }) => {
                     for (const [wsId, client] of wsMap.entries()) {
-                        if (recepientsIds.includes(wsId) && client.readyState === 1) {
+                        if (
+                            recepientsIds.includes(wsId) &&
+                            client.readyState === 1
+                        ) {
                             client.send(Serializer.serialize(message))
                         }
                     }
                 })
             } catch (error) {
-                debugger
-                console.error('Error on message', error)
-                // this.closeAllConnections(500, JSON.stringify(error))
+                if (isCustomError(error)) {
+                    console.log('\x1b[33m%s\x1b[0m', `${error}`)
+                } else {
+                    this.closeAllConnections(500, JSON.stringify(error))
+                }
             }
         })
 

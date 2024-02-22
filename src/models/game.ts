@@ -9,7 +9,7 @@ export class Game {
     roomId: number
     lastAttackStatus: AttackStatus
     lastAffectedCells: { x: number; y: number }[] = []
-    lastHit: { x: number; y: number } | null = null
+    hitCells: Record<number, { x: number; y: number }[]> = {}
     killedShip: Ship | null = null
 
     constructor(roomId: number) {
@@ -21,9 +21,13 @@ export class Game {
     get playersIds() {
         return Array.from(this.players.keys())
     }
-    
+
     attack(playerIndex: number, { x, y }: { x: number; y: number }) {
-        if (this.lastHit?.x === x && this.lastHit?.y === y) {
+        if (
+            this.hitCells[playerIndex]?.find(
+                (cell) => cell.x === x && cell.y === y
+            )
+        ) {
             return
         }
 
@@ -49,7 +53,7 @@ export class Game {
         if (attackedShip) {
             attackedShip.addHit()
 
-            this.lastAttackStatus = attackedShip.isKilled()
+            this.lastAttackStatus = attackedShip.isKilled
                 ? AttackStatus.KILLED
                 : AttackStatus.SHOT
 
@@ -59,7 +63,7 @@ export class Game {
             }
         }
 
-        this.lastHit = { x, y }
+        this.hitCells[playerIndex]?.push({ x, y })
         this.updateStatus()
     }
 
@@ -71,6 +75,7 @@ export class Game {
             throw new Error('Game is full')
         }
         this.players.set(userId, [])
+        this.hitCells[userId] = []
     }
 
     hasPlayer(playerIndex: number) {
@@ -111,7 +116,7 @@ export class Game {
             throw new Error('Game is not finished')
         }
         for (const [id, ships] of this.players.entries()) {
-            if (ships.some((ship) => !ship.isKilled())) {
+            if (ships.some((ship) => !ship.isKilled)) {
                 return id
             }
         }
@@ -131,7 +136,7 @@ export class Game {
         }
 
         for (const [, ships] of this.players.entries()) {
-            if (ships.every((ship) => ship.isKilled())) {
+            if (ships.every((ship) => ship.isKilled)) {
                 this.status = 'finished'
             }
         }
