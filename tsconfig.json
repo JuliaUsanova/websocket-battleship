@@ -1,0 +1,33 @@
+{
+    "compilerOptions": {
+        "baseUrl": "/",
+        "forceConsistentCasingInFileNames": true,
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "lib": ["ESNext", "ES2020", "ES2021", "ES2022", "ES2023", "ES6"],
+        "rootDir": "./",
+        "module": "ESNext",
+        "moduleResolution": "Node",
+        "allowJs": true,
+        "noUncheckedIndexedAccess": true,
+        "strictNullChecks": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "outDir": "dist",
+        "removeComments": true,
+        "resolveJsonModule": true,
+        "skipLibCheck": true,
+        "sourceMap": true,
+        "strict": true,
+        "strictPropertyInitialization": false,
+        "target": "ES2020",
+        "allowUnreachableCode": false,
+        "allowUnusedLabels": false,
+        "alwaysStrict": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "dist", "front"],
+    "files": ["index.ts"]
+}

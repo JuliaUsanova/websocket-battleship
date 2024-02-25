@@ -1,21 +1,25 @@
 {
     "name": "ws_task",
     "version": "1.0.0",
-    "description": "Template for the WebSocket remote control task",
+    "description": "Websocket-battleship game",
     "main": "index.js",
     "type": "module",
     "scripts": {
-        "start": "node ./index.js",
-        "start:dev": "nodemon ./index.js",
+        "start": "tsc && node ./dist/index.js",
+        "start:dev": "tsx watch ./index.ts",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
-    "author": "Andrei Auchynnikau",
+    "author": "Julia Usanova",
     "keywords": [],
     "license": "ISC",
     "devDependencies": {
-        "nodemon": "^2.0.16"
+        "@types/node": "^20.11.18",
+        "@types/ws": "^8.5.10",
+        "tsx": "^4.7.1",
+        "typescript": "^5.3.3"
     },
     "dependencies": {
+        "prettier": "^3.2.5",
         "ws": "^8.8.0"
     }
 }
